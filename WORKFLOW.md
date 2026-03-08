@@ -47,7 +47,7 @@ This document defines the step-by-step process for implementing each tutorial st
 1. Code runs: `uv run your-own-bot chat`
 2. Test the new feature
 3. Verify patterns match picklebot
-4. Write/update README.md
+4. Write/update README.md (follow concise format - see "README Format" section below)
 
 ---
 
@@ -146,8 +146,27 @@ This document defines the step-by-step process for implementing each tutorial st
 - [ ] `uv run your-own-bot chat` works
 - [ ] New feature works as described
 - [ ] Matches picklebot patterns
-- [ ] README.md updated
+- [ ] README.md updated (follow concise format from Step 00)
 - [ ] Commit with clear message
+
+### README Format
+
+Follow the concise format from Step 00's README:
+
+1. **Title + one-line description**
+2. **Prerequisites** (only if needed)
+3. **What We will Build?**
+   - Simple architecture diagram
+   - Key components (bullet list)
+4. **Key Changes**
+   - Code snippets with file links
+   - Show only the most important parts
+5. **Notes** (optional, only if needed)
+6. **How to Run**
+   - Command + example interaction
+7. **What's Next** (link to next step)
+
+**Keep it extremely concise.** No lengthy explanations, no deep dives, no alternatives discussion. The code speaks for itself.
 
 ### File Priority Order
 1. ⭐ picklebot code (trim to essentials)
