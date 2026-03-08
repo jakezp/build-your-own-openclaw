@@ -40,6 +40,11 @@ Follow this order when implementing each step:
 - Show the evolution, not just the result
 - **No test files** - one session per step for implementation
 
+### **CRITICAL: Follow the Workflow**
+
+See [WORKFLOW.md](./WORKFLOW.md) for the step-by-step implementation process.
+This ensures consistency with picklebot patterns across all steps.
+
 ---
 
 ## Phase 1: Capable Single Agent
