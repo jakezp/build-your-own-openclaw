@@ -58,6 +58,26 @@ def create_skill_tool(skill_loader: "SkillLoader"):
     return skill_tool
 ```
 
+## Notes
+
+Openclaw does not implement skill system with a separate tool. Instead, it uses **system prompt injection with file reading**.
+
+### Two Approaches to Skills
+
+**Tool Approach (this tutorial):**
+- Dedicated `skill` tool lists available skills and loads content
+- Tool schema includes skill metadata in its description
+- Agent calls `skill` tool to get skill content
+- Self-contained skill discovery and loading
+
+**System Prompt Approach (OpenClaw):**
+- Skill metadata (id, name, description) injected into system prompt
+- Agent uses standard `readfile` tool to read SKILL.md
+- No specialized skill tool needed
+- Simpler tool registry
+
+So it will be injected as one extra layer of system prompt in [Step 14: Multi-Layer Prompts](../14-multi-layer-prompts/).
+
 ## How to Run
 
 ```bash

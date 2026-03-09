@@ -1,4 +1,4 @@
-"""Agent and AgentSession for step 02 with tool and skill support."""
+"""Agent and AgentSession for step 01 with tool support."""
 
 import asyncio
 import json
@@ -12,34 +12,74 @@ from litellm.types.completion import (
     ChatCompletionMessageToolCallParam,
 )
 
-from src.core.skill_loader import SkillLoader
 from src.provider.llm import LLMProvider, LLMToolCall
+from src.core.session_state import SessionState
+from src.core.skill_loader import SkillLoader
 from src.tools.registry import ToolRegistry
 from src.tools.skill_tool import create_skill_tool
+
 
 if TYPE_CHECKING:
     from src.core.agent_loader import AgentDef
     from src.utils.config import Config
 
 
-@dataclass
-class SessionState:
-    """Pure conversation state container."""
+class Agent:
+    """
+    A configured agent that creates and manages conversation sessions.
 
-    session_id: str
-    agent: "Agent"
-    messages: list[Message] = field(default_factory=list)
+    Agent is a factory for sessions and holds the LLM and config
+    that sessions use for chatting.
+    """
 
-    def add_message(self, message: Message) -> None:
-        """Add message to conversation history."""
-        self.messages.append(message)
+    def __init__(self, agent_def: "AgentDef", config: "Config") -> None:
+        self.agent_def = agent_def
+        self.config = config
+        self.llm = LLMProvider.from_config(agent_def.llm)
+        self.skill_loader = SkillLoader.from_config(config)
 
-    def build_messages(self) -> list[Message]:
-        """Build messages list with system prompt."""
-        system_prompt = self.agent.agent_def.agent_md
-        messages: list[Message] = [{"role": "system", "content": system_prompt}]
-        messages.extend(self.messages)
-        return messages
+
+    def _build_tools(self) -> ToolRegistry:
+        """
+        Build a ToolRegistry with tools appropriate for the session.
+
+        Args:
+            include_post_message: Whether to include the post_message tool
+
+        Returns:
+            ToolRegistry with base tools + optional tools
+        """
+        registry = ToolRegistry.with_builtins()
+
+        if self.agent_def.allow_skills:
+            skill_tool = create_skill_tool(self.skill_loader)
+            if skill_tool:
+                registry.register(skill_tool)
+
+        return registry
+
+    def new_session(self, session_id: str | None = None) -> "AgentSession":
+        """
+        Create a new conversation session.
+
+        Args:
+            session_id: Optional session ID (generated if not provided)
+
+        Returns:
+            A new AgentSession instance.
+        """
+        session_id = session_id or str(uuid.uuid4())
+        tools = self._build_tools()
+
+        state = SessionState(
+            session_id=session_id,
+            agent=self,
+            messages=[],
+        )
+
+        session = AgentSession(agent=self, state=state, tools=tools)
+        
+        return session
 
 
 @dataclass
@@ -101,7 +141,7 @@ class AgentSession:
 
     async def _handle_tool_calls(
         self,
-        tool_calls: list[LLMToolCall],
+        tool_calls: list["LLMToolCall"],
     ) -> None:
         """
         Handle tool calls from the LLM response.
@@ -123,7 +163,7 @@ class AgentSession:
 
     async def _execute_tool_call(
         self,
-        tool_call: LLMToolCall,
+        tool_call: "LLMToolCall",
     ) -> str:
         """
         Execute a single tool call.
@@ -138,55 +178,11 @@ class AgentSession:
         try:
             args = json.loads(tool_call.arguments)
         except json.JSONDecodeError:
-            return f"Error: Invalid JSON in tool arguments"
+            args = {}
 
         try:
-            result = await self.tools.execute_tool(
-                tool_call.name, session=self, **args
-            )
-            return result
+            result = await self.tools.execute_tool(tool_call.name, session=self, **args)
         except Exception as e:
-            return f"Error executing tool {tool_call.name}: {e}"
+            result = f"Error executing tool: {e}"
 
-
-class Agent:
-    """
-    A configured agent that creates and manages conversation sessions.
-
-    Agent is a factory for sessions and holds the LLM and config
-    that sessions use for chatting.
-    """
-
-    def __init__(self, agent_def: "AgentDef", config: "Config") -> None:
-        self.agent_def = agent_def
-        self.config = config
-        self.llm = LLMProvider.from_config(agent_def.llm)
-        self.skill_loader = SkillLoader.from_config(config)
-
-    def new_session(self, session_id: str | None = None) -> AgentSession:
-        """
-        Create a new conversation session.
-
-        Args:
-            session_id: Optional session ID (generated if not provided)
-
-        Returns:
-            A new AgentSession instance.
-        """
-        session_id = session_id or str(uuid.uuid4())
-
-        state = SessionState(
-            session_id=session_id,
-            agent=self,
-            messages=[],
-        )
-
-        # Create tool registry with builtins
-        tools = ToolRegistry.with_builtins()
-
-        # Add skill tool if skills are available
-        skill_tool = create_skill_tool(self.skill_loader)
-        if skill_tool:
-            tools.register(skill_tool)
-
-        return AgentSession(agent=self, state=state, tools=tools)
+        return result
