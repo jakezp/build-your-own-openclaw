@@ -1,8 +1,8 @@
 """Chat CLI command for interactive sessions with slash commands."""
 
 import asyncio
-from typing import TYPE_CHECKING
 
+import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich import print as rprint
@@ -11,15 +11,13 @@ from rich.text import Text
 
 from mybot.core.agent import Agent
 from mybot.core.agent_loader import AgentLoader
-
-if TYPE_CHECKING:
-    from mybot.utils.config import Config
+from mybot.utils.config import Config
 
 
 class ChatLoop:
     """Interactive chat session with slash commands."""
 
-    def __init__(self, config: "Config", agent_id: str | None = None):
+    def __init__(self, config: Config, agent_id: str | None = None):
         self.config = config
         self.console = Console()
 
@@ -33,21 +31,13 @@ class ChatLoop:
         self.session = self.agent.new_session()
 
     def get_user_input(self) -> str:
-        """Get user input with styled prompt.
-
-        Returns:
-            Trimmed user input
-        """
+        """Get user input with styled prompt."""
         prompt_text = Text("You", style="cyan")
         user_input = Prompt.ask(prompt_text, console=self.console)
         return user_input.strip()
 
     def display_agent_response(self, content: str) -> None:
-        """Display agent response with styled prefix.
-
-        Args:
-            content: Agent response content
-        """
+        """Display agent response with styled prefix."""
         prefix = Text(f"{self.agent.agent_def.id}: ", style="green")
 
         self.console.print(prefix, end="")
@@ -94,7 +84,10 @@ class ChatLoop:
             rprint("\n[bold yellow]Goodbye![/bold yellow]")
 
 
-def chat_command(config: "Config", agent_id: str | None = None) -> None:
+
+def chat_command(ctx: typer.Context, agent_id: str | None = None) -> None:
     """Start interactive chat session."""
+    config = ctx.obj.get("config")
+
     chat_loop = ChatLoop(config, agent_id=agent_id)
     asyncio.run(chat_loop.run())

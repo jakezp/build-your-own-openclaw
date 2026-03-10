@@ -36,7 +36,7 @@ User Input → ChatLoop → AgentSession → Agent → LLM → Response
 
 ```python
 class ChatLoop:
-    def __init__(self, config: "Config", agent_id: str | None = None):
+    def __init__(self, config: Config, agent_id: str | None = None):
         self.config = config
         self.console = Console()
 
@@ -84,7 +84,7 @@ class ChatLoop:
 ``` python
 @dataclass
 class AgentSession:
-    agent: "Agent"
+    agent: Agent
     state: SessionState
     started_at: datetime = field(default_factory=datetime.now)
 

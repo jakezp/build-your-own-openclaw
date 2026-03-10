@@ -9,11 +9,7 @@ from mybot.utils.config import LLMConfig
 
 
 class LLMProvider:
-    """
-    LLM provider using litellm for multi-provider support.
-
-    Wraps litellm's acompletion for async chat calls.
-    """
+    """LLM provider using litellm for multi-provider support."""
 
     def __init__(
         self,
@@ -24,16 +20,7 @@ class LLMProvider:
         max_tokens: int = 2048,
         **kwargs: Any,
     ):
-        """Initialize LLM provider.
-
-        Args:
-            model: Model name (e.g., "gpt-4", "claude-3-opus-20240229")
-            api_key: API key for the provider
-            api_base: Custom API endpoint (optional)
-            temperature: Sampling temperature
-            max_tokens: Maximum tokens in response
-            **kwargs: Additional provider-specific settings
-        """
+        """Initialize LLM provider."""
         self.model = model
         self.api_key = api_key
         self.api_base = api_base
@@ -43,14 +30,7 @@ class LLMProvider:
 
     @classmethod
     def from_config(cls, config: LLMConfig) -> "LLMProvider":
-        """Create provider from LLMConfig.
-
-        Args:
-            config: LLMConfig object
-
-        Returns:
-            LLMProvider instance
-        """
+        """Create provider from LLMConfig."""
         return cls(
             model=config.model,
             api_key=config.api_key,
@@ -64,17 +44,7 @@ class LLMProvider:
         messages: list[Message],
         **kwargs: Any,
     ) -> str:        
-        """Call LLM with messages.
-
-        Args:
-            messages: List of message dicts with "role" and "content"
-
-        Returns:
-            Assistant response text
-
-        Raises:
-            Exception: If LLM call fails
-        """
+        """Call LLM with messages."""
         request_kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": messages,

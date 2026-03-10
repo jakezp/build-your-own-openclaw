@@ -1,8 +1,4 @@
-"""Context guard for proactive context window management.
-
-Trimmed from picklebot.core.context_guard for step 05.
-Simplified: removed SharedContext dependency, session rolling.
-"""
+"""Context guard for proactive context window management."""
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
@@ -30,14 +26,7 @@ class ContextGuard:
     max_tool_result_chars: int = MAX_TOOL_RESULT_CHARS
 
     def estimate_tokens(self, state: "SessionState") -> int:
-        """Estimate token count for session state.
-
-        Args:
-            state: Session state to estimate
-
-        Returns:
-            Estimated token count
-        """
+        """Estimate token count for session state."""
         if not state.messages:
             return 0
         return token_counter(
@@ -48,17 +37,7 @@ class ContextGuard:
         self,
         state: "SessionState",
     ) -> "SessionState":
-        """Check token count, compact if needed.
-
-        Applies truncation to large tool results when over threshold,
-        then falls back to full compaction if still needed.
-
-        Args:
-            state: Current session state
-
-        Returns:
-            SessionState (same state, possibly with truncated/compacted messages)
-        """
+        """Check token count, compact if needed."""
         token_count = self.estimate_tokens(state)
 
         if token_count < self.token_threshold:
@@ -81,14 +60,7 @@ class ContextGuard:
         return min(compress_count, len(state.messages) - keep_count)
 
     def _truncate_large_tool_results(self, messages: list[Message]) -> list[Message]:
-        """Truncate oversized tool results to reduce context size.
-
-        Args:
-            messages: List of messages to process
-
-        Returns:
-            List of messages with large tool results truncated
-        """
+        """Truncate oversized tool results to reduce context size."""
         result: list[Message] = []
         for msg in messages:
             if msg.get("role") == "tool":
@@ -110,14 +82,7 @@ class ContextGuard:
         return result
 
     def _serialize_messages_for_summary(self, messages: list[Message]) -> str:
-        """Serialize messages to plain text for summarization.
-
-        Args:
-            messages: List of messages to serialize
-
-        Returns:
-            Plain text representation
-        """
+        """Serialize messages to plain text for summarization."""
         lines = []
         for msg in messages:
             role = msg.get("role", "unknown")
@@ -141,14 +106,7 @@ class ContextGuard:
         self,
         state: "SessionState",
     ) -> "SessionState":
-        """Compact history by summarizing older messages.
-
-        Args:
-            state: Current session state
-
-        Returns:
-            SessionState with compacted messages
-        """
+        """Compact history by summarizing older messages."""
         compress_count = self._compress_message_count(state)
 
         old_messages = state.messages[:compress_count]

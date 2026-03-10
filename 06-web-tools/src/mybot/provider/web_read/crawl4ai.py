@@ -13,14 +13,7 @@ class Crawl4AIProvider(WebReadProvider):
         pass
 
     async def read(self, url: str) -> ReadResult:
-        """Read a web page using Crawl4AI.
-
-        Args:
-            url: URL to read
-
-        Returns:
-            ReadResult with markdown content or error
-        """
+        """Read a web page using Crawl4AI."""
         try:
             async with AsyncWebCrawler(verbose=False) as crawler:
                 result = await crawler.arun(url=url)

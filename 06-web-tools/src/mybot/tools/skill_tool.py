@@ -10,14 +10,7 @@ if TYPE_CHECKING:
 
 
 def create_skill_tool(skill_loader: "SkillLoader"):
-    """Factory function to create skill tool with dynamic schema.
-
-    Args:
-        skill_loader: SkillLoader instance for discovering and loading skills
-
-    Returns:
-        Async tool function for loading skills, or None if no skills available
-    """
+    """Factory function to create skill tool with dynamic schema."""
     skill_metadata = skill_loader.discover_skills()
 
     if not skill_metadata:
@@ -48,15 +41,7 @@ def create_skill_tool(skill_loader: "SkillLoader"):
         },
     )
     async def skill_tool(skill_name: str, session: "AgentSession") -> str:
-        """Load and return skill content.
-
-        Args:
-            skill_name: The ID of the skill to load
-            session: The agent session context
-
-        Returns:
-            Skill content or error message
-        """
+        """Load and return skill content."""
         try:
             skill_def = skill_loader.load_skill(skill_name)
             return skill_def.content

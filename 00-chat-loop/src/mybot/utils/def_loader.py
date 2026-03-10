@@ -34,20 +34,7 @@ def parse_definition(
     def_id: str,
     parse_fn: Callable[[str, dict[str, Any], str], T],
 ) -> T:
-    """
-    Parse YAML frontmatter + markdown body with type conversion.
-
-    Args:
-        content: Raw file content
-        def_id: Definition ID (passed to parse_fn for context)
-        parse_fn: Callback(def_id, frontmatter, body) -> typed object
-
-    Returns:
-        The typed object returned by parse_fn
-
-    Raises:
-        Whatever parse_fn raises (e.g., ValidationError)
-    """
+    """Parse YAML frontmatter + markdown body with type conversion."""
     # Find frontmatter delimiters
     if not content.startswith("---\n"):
         body = content
@@ -70,17 +57,7 @@ def discover_definitions(
     filename: str,
     parse_fn: Callable[[str, dict[str, Any], str], T | None],
 ) -> list[T]:
-    """
-    Scan directory for definition files.
-
-    Args:
-        path: Directory containing definition folders
-        filename: File to look for (e.g., "AGENT.md", "SKILL.md")
-        parse_fn: Callback(def_id, frontmatter, body) -> Metadata or None
-
-    Returns:
-        List of metadata objects from successful parses
-    """
+    """Scan directory for definition files."""
     if not path.exists():
         logger.warning(f"Definitions directory not found: {path}")
         return []
@@ -114,19 +91,7 @@ def write_definition(
     base_path: Path,
     filename: str,
 ) -> Path:
-    """
-    Write a definition file with YAML frontmatter and markdown body.
-
-    Args:
-        def_id: Definition ID (directory name)
-        frontmatter: Dict of YAML frontmatter fields
-        body: Markdown body content
-        base_path: Base directory (e.g., agents_path, skills_path)
-        filename: File to write (e.g., "AGENT.md", "SKILL.md")
-
-    Returns:
-        Path to the written file
-    """
+    """Write a definition file with YAML frontmatter and markdown body."""
     def_dir = base_path / def_id
     def_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,6 +1,4 @@
-"""Session state container with persistence helpers.
-
-"""
+"""Session state container with persistence helpers."""
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -27,10 +25,8 @@ class SessionState:
         """Add message to in-memory list + persist."""
         self.messages.append(message)
 
-        # Save to history if available
-        if self.history_store:
-            history_msg = HistoryMessage.from_message(message)
-            self.history_store.save_message(self.session_id, history_msg)
+        history_msg = HistoryMessage.from_message(message)
+        self.history_store.save_message(self.session_id, history_msg)
 
     def build_messages(self) -> list[Message]:
         """Build messages list with system prompt."""

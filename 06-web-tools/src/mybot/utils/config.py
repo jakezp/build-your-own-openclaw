@@ -65,31 +65,14 @@ class Config(BaseModel):
 
     @classmethod
     def load(cls, workspace_dir: Path) -> "Config":
-        """Load configuration from workspace directory.
-
-        Args:
-            workspace_dir: Path to workspace directory containing config.yaml
-
-        Returns:
-            Config instance with all settings loaded and validated
-
-        Raises:
-            FileNotFoundError: If config file doesn't exist
-        """
+        """Load configuration from workspace directory."""
         config_data = cls._load_config(workspace_dir)
         config_data["workspace"] = workspace_dir
         return cls.model_validate(config_data)
 
     @classmethod
     def _load_config(cls, workspace_dir: Path) -> dict[str, Any]:
-        """Load config from YAML file.
-
-        Args:
-            workspace_dir: Directory containing config.yaml
-
-        Returns:
-            Configuration dict from YAML file
-        """
+        """Load config from YAML file."""
         config_file = workspace_dir / "config.user.yaml"
         if not config_file.exists():
             raise FileNotFoundError(f"Config file not found: {config_file}")

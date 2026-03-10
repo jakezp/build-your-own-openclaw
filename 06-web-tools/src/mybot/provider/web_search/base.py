@@ -22,29 +22,12 @@ class WebSearchProvider(ABC):
 
     @abstractmethod
     async def search(self, query: str) -> list[SearchResult]:
-        """Search the web and return normalized results.
-
-        Args:
-            query: The search query string
-
-        Returns:
-            List of normalized SearchResult objects
-        """
+        """Search the web and return normalized results."""
         pass
 
     @staticmethod
     def from_config(config: "Config") -> "WebSearchProvider":
-        """Factory method to create provider from config.
-
-        Args:
-            config: Application config with websearch settings
-
-        Returns:
-            Configured WebSearchProvider instance
-
-        Raises:
-            ValueError: If provider is unknown or not configured
-        """
+        """Factory method to create provider from config."""
         if config.websearch is None:
             raise ValueError("Websearch not configured")
 

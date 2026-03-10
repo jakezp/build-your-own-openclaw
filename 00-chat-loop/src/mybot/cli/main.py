@@ -37,10 +37,7 @@ def main(
         callback=workspace_callback,
     ),
 ) -> None:
-    """
-    Configuration is loaded from workspace/config.user.yaml by default.
-    Use --workspace to specify a custom workspace directory.
-    """
+    """Configuration is loaded from workspace/config.user.yaml by default."""
     workspace_path = ctx.obj["workspace"]
     config_file = workspace_path / "config.user.yaml"
 
@@ -69,8 +66,7 @@ def chat(
     ] = None,
 ) -> None:
     """Start interactive chat session."""
-    config = ctx.obj.get("config")
-    chat_command(config, agent_id=agent)
+    chat_command(ctx, agent_id=agent)
 
 
 if __name__ == "__main__":

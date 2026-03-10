@@ -12,9 +12,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Alias for clarity
-SkillNotFoundError = DefNotFoundError
-
 
 class SkillDef(BaseModel):
     """Loaded skill definition."""
@@ -63,20 +60,10 @@ class SkillLoader:
             return None
 
     def load_skill(self, skill_id: str) -> SkillDef:
-        """Load full skill definition by ID.
-
-        Args:
-            skill_id: The skill directory name
-
-        Returns:
-            SkillDef with full content
-
-        Raises:
-            SkillNotFoundError: If skill doesn't exist
-        """
+        """Load full skill definition by ID."""
         skills = self.discover_skills()
         for skill in skills:
             if skill.id == skill_id:
                 return skill
 
-        raise SkillNotFoundError("skill", skill_id)
+        raise DefNotFoundError("skill", skill_id)

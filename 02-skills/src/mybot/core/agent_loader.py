@@ -31,28 +31,11 @@ class AgentLoader:
         return AgentLoader(config)
 
     def __init__(self, config: Config):
-        """
-        Initialize AgentLoader.
-
-        Args:
-            config: Config object containing agents_path, llm, workspace, etc.
-        """
+        """Initialize AgentLoader."""
         self.config = config
 
     def load(self, agent_id: str) -> AgentDef:
-        """
-        Load agent by ID.
-
-        Args:
-            agent_id: Agent folder name
-
-        Returns:
-            AgentDef with merged settings
-
-        Raises:
-            DefNotFoundError: Agent folder or file doesn't exist
-            InvalidDefError: Agent file is malformed
-        """
+        """Load agent by ID."""
         agent_file = self.config.agents_path / agent_id / "AGENT.md"
         if not agent_file.exists():
             raise DefNotFoundError("agent", agent_id)
@@ -87,15 +70,7 @@ class AgentLoader:
             raise InvalidDefError("agent", def_id, str(e))
 
     def _merge_llm_config(self, agent_llm: dict[str, Any] | None) -> LLMConfig:
-        """
-        Deep merge agent's llm config with global defaults.
-
-        Args:
-            agent_llm: Optional dict of llm overrides from agent frontmatter
-
-        Returns:
-            LLMConfig with merged settings
-        """
+        """Deep merge agent's llm config with global defaults."""
         base = self.config.llm.model_dump()
         if agent_llm:
             base = {**base, **agent_llm}

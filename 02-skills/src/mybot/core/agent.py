@@ -25,12 +25,7 @@ if TYPE_CHECKING:
 
 
 class Agent:
-    """
-    A configured agent that creates and manages conversation sessions.
-
-    Agent is a factory for sessions and holds the LLM and config
-    that sessions use for chatting.
-    """
+    """A configured agent that creates and manages conversation sessions."""
 
     def __init__(self, agent_def: "AgentDef", config: "Config") -> None:
         self.agent_def = agent_def
@@ -40,15 +35,7 @@ class Agent:
 
 
     def _build_tools(self) -> ToolRegistry:
-        """
-        Build a ToolRegistry with tools appropriate for the session.
-
-        Args:
-            include_post_message: Whether to include the post_message tool
-
-        Returns:
-            ToolRegistry with base tools + optional tools
-        """
+        """Build a ToolRegistry with tools appropriate for the session."""
         registry = ToolRegistry.with_builtins()
 
         if self.agent_def.allow_skills:
@@ -59,15 +46,7 @@ class Agent:
         return registry
 
     def new_session(self, session_id: str | None = None) -> "AgentSession":
-        """
-        Create a new conversation session.
-
-        Args:
-            session_id: Optional session ID (generated if not provided)
-
-        Returns:
-            A new AgentSession instance.
-        """
+        """Create a new conversation session."""
         session_id = session_id or str(uuid.uuid4())
         tools = self._build_tools()
 
@@ -86,7 +65,7 @@ class Agent:
 class AgentSession:
     """Chat orchestrator - operates on swappable SessionState."""
 
-    agent: "Agent"
+    agent: Agent
     state: SessionState
     tools: ToolRegistry
     started_at: datetime = field(default_factory=datetime.now)
@@ -97,15 +76,7 @@ class AgentSession:
         return self.state.session_id
 
     async def chat(self, message: str) -> str:
-        """
-        Send a message to the LLM and get a response.
-
-        Args:
-            message: User message
-
-        Returns:
-            Assistant's response text
-        """
+        """Send a message to the LLM and get a response."""
         user_msg: Message = {"role": "user", "content": message}
         self.state.add_message(user_msg)
 
@@ -143,12 +114,7 @@ class AgentSession:
         self,
         tool_calls: list["LLMToolCall"],
     ) -> None:
-        """
-        Handle tool calls from the LLM response.
-
-        Args:
-            tool_calls: List of tool calls from LLM response
-        """
+        """Handle tool calls from the LLM response."""
         tool_call_results = await asyncio.gather(
             *[self._execute_tool_call(tool_call) for tool_call in tool_calls]
         )
@@ -163,17 +129,9 @@ class AgentSession:
 
     async def _execute_tool_call(
         self,
-        tool_call: "LLMToolCall",
+        tool_call: LLMToolCall,
     ) -> str:
-        """
-        Execute a single tool call.
-
-        Args:
-            tool_call: Tool call from LLM response
-
-        Returns:
-            Tool execution result
-        """
+        """Execute a single tool call."""
         # Extract key arguments
         try:
             args = json.loads(tool_call.arguments)

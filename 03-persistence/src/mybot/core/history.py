@@ -82,15 +82,7 @@ class HistoryMessage(BaseModel):
 
 
 class HistoryStore:
-    """
-    JSONL file-based history storage.
-
-    Directory structure:
-    .sessions/
-    ├── index.jsonl              # Session metadata
-    └── sessions/
-        └── {session_id}.jsonl   # Messages (one file per session)
-    """
+    """JSONL file-based history storage."""
 
     @staticmethod
     def from_config(config: "Config") -> "HistoryStore":
@@ -195,14 +187,7 @@ class HistoryStore:
         return sessions
 
     def get_messages(self, session_id: str) -> list[HistoryMessage]:
-        """Get all messages for a session.
-
-        Args:
-            session_id: The session ID to get messages for
-
-        Returns:
-            List of HistoryMessage objects in chronological order
-        """
+        """Get all messages for a session."""
         session_file = self._session_path(session_id)
         if not session_file.exists():
             return []

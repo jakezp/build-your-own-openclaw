@@ -10,12 +10,7 @@ if TYPE_CHECKING:
 
 
 class ToolRegistry:
-    """
-    Registry for all available tools.
-
-    Handles tool registration, retrieval, and tool schema generation
-    for LiteLLM function calling.
-    """
+    """Registry for all available tools."""
 
     def __init__(self) -> None:
         """Initialize an empty tool registry."""
@@ -40,17 +35,7 @@ class ToolRegistry:
     async def execute_tool(
         self, name: str, session: "AgentSession", **kwargs: Any
     ) -> str:
-        """
-        Execute a tool by name.
-
-        Args:
-            name: Name of the tool to execute
-            session: The agent session context
-            **kwargs: Tool-specific arguments
-
-        Raises:
-            ValueError: If tool is not found
-        """
+        """Execute a tool by name."""
         tool = self.get(name)
         if tool is None:
             raise ValueError(f"Tool not found: {name}")

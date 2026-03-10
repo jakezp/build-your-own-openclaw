@@ -11,14 +11,7 @@ if TYPE_CHECKING:
 
 
 def create_webread_tool(config: "Config") -> BaseTool | None:
-    """Factory to create webread tool with injected config.
-
-    Args:
-        config: Config for accessing webread settings
-
-    Returns:
-        Tool function for web page reading or None if not configured
-    """
+    """Factory to create webread tool with injected config."""
     if not config.webread:
         return None
 
@@ -42,15 +35,7 @@ def create_webread_tool(config: "Config") -> BaseTool | None:
         },
     )
     async def webread(url: str, session: "AgentSession") -> str:
-        """Read a web page and return markdown content.
-
-        Args:
-            url: The URL to read
-            session: The agent session context
-
-        Returns:
-            Markdown content of the page or error message
-        """
+        """Read a web page and return markdown content."""
 
         result = await provider.read(url)
 

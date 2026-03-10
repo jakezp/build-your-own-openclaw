@@ -15,25 +15,11 @@ class BraveSearchProvider(WebSearchProvider):
     BASE_URL = "https://api.search.brave.com/res/v1/web/search"
 
     def __init__(self, config: "Config"):
-        """Initialize Brave Search provider.
-
-        Args:
-            api_key: Brave Search API key
-        """
+        """Initialize Brave Search provider."""
         self.api_key = config.websearch.api_key
 
     async def search(self, query: str) -> list[SearchResult]:
-        """Search the web using Brave Search API.
-
-        Args:
-            query: Search query string
-
-        Returns:
-            List of normalized search results
-
-        Raises:
-            httpx.HTTPStatusError: If API request fails
-        """
+        """Search the web using Brave Search API."""
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 self.BASE_URL,

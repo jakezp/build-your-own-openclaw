@@ -23,29 +23,12 @@ class WebReadProvider(ABC):
 
     @abstractmethod
     async def read(self, url: str) -> ReadResult:
-        """Read a web page and return normalized content.
-
-        Args:
-            url: The URL to read
-
-        Returns:
-            ReadResult with markdown content or error
-        """
+        """Read a web page and return normalized content."""
         pass
 
     @staticmethod
     def from_config(config: "Config") -> "WebReadProvider":
-        """Factory method to create provider from config.
-
-        Args:
-            config: Application config with webread settings
-
-        Returns:
-            Configured WebReadProvider instance
-
-        Raises:
-            ValueError: If provider is unknown or not configured
-        """
+        """Factory method to create provider from config."""
         if config.webread is None:
             raise ValueError("Webread not configured")
 

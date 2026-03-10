@@ -31,15 +31,7 @@ class CommandRegistry:
         return commands
 
     def resolve(self, input: str) -> tuple[Command, str] | None:
-        """
-        Parse input and return (command, args) if it matches.
-
-        Args:
-            input: Full input string (e.g., "/agent" or "/help")
-
-        Returns:
-            Tuple of (Command, args_string) or None if no match
-        """
+        """Parse input and return (command, args) if it matches."""
         if not input.startswith("/"):
             return None
 
@@ -56,16 +48,7 @@ class CommandRegistry:
         return None
 
     async def dispatch(self, input: str, session: "AgentSession") -> str | None:
-        """
-        Parse and execute a slash command.
-
-        Args:
-            input: Full input string
-            session: AgentSession with full context
-
-        Returns:
-            Response string if command matched, None if not a command
-        """
+        """Parse and execute a slash command."""
         resolved = self.resolve(input)
         if not resolved:
             return None

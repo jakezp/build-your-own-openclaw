@@ -17,12 +17,7 @@ class BaseTool(ABC):
 
     @abstractmethod
     async def execute(self, session: "AgentSession", **kwargs: Any) -> str:
-        """Execute the tool.
-
-        Args:
-            session: The agent session context
-            **kwargs: Tool-specific arguments
-        """
+        """Execute the tool."""
 
     def get_tool_schema(self) -> dict[str, Any]:
         """Get the tool/function schema for LiteLLM."""
@@ -61,12 +56,7 @@ class FunctionTool(BaseTool):
         self._func = func
 
     async def execute(self, session: "AgentSession", **kwargs: Any) -> str:
-        """Execute the underlying function.
-
-        Args:
-            session: The agent session context
-            **kwargs: Tool-specific arguments
-        """
+        """Execute the underlying function."""
         result = self._func(session=session, **kwargs)
         if asyncio.iscoroutine(result):
             result = await result

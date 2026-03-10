@@ -11,14 +11,7 @@ if TYPE_CHECKING:
 
 
 def create_websearch_tool(config: "Config") -> BaseTool | None:
-    """Factory to create websearch tool with injected config.
-
-    Args:
-        config: Config for accessing websearch settings
-
-    Returns:
-        Tool function for web search or None if not configured
-    """
+    """Factory to create websearch tool with injected config."""
     if not config.websearch:
         return None
 
@@ -42,15 +35,7 @@ def create_websearch_tool(config: "Config") -> BaseTool | None:
         },
     )
     async def websearch(query: str, session: "AgentSession") -> str:
-        """Search the web and return formatted results.
-
-        Args:
-            query: The search query string
-            session: The agent session context
-
-        Returns:
-            Formatted markdown string with search results
-        """
+        """Search the web and return formatted results."""
 
         results = await provider.search(query)
 

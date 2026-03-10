@@ -49,3 +49,8 @@ docs/
 
 # local utils
 compare_folders.py
+generate_diff_md.py
+cleanup_docstrings.py
+compare_steps.py
+generate_diff.sh
+**/DIFF*.md

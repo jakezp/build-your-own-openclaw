@@ -8,6 +8,28 @@ if TYPE_CHECKING:
     from mybot.core.agent import AgentSession
 
 
+class SessionCommand(Command):
+    """Show current session details."""
+
+    name = "session"
+    description = "Show current session details"
+
+    async def execute(self, args: str, session: "AgentSession") -> str:
+        info = session.agent.history_store.get_session_info(session.session_id)
+
+        # Handle case where session not found in index
+        created_str = info.created_at if info else "Unknown"
+
+        lines = [
+            f"**Session ID:** `{session.session_id}`",
+            f"**Agent:** {session.agent.agent_def.name} (`{session.agent.agent_def.id}`)",
+            f"**Created:** {created_str}",
+            f"**Messages:** {len(session.state.messages)}",
+            f"**Source:** `{session.source}`",
+        ]
+        return "\n".join(lines)
+
+
 class HelpCommand(Command):
     """Show available commands."""
 
@@ -52,26 +74,5 @@ class SkillsCommand(Command):
             f"**Name:** {skill.name}",
             f"**Description:** {skill.description}",
             f"\n---\n\n**SKILL.md:**\n```\n{skill.content}\n```",
-        ]
-        return "\n".join(lines)
-
-
-class SessionCommand(Command):
-    """Show current session details."""
-
-    name = "session"
-    description = "Show current session details"
-
-    async def execute(self, args: str, session: "AgentSession") -> str:
-        info = session.agent.history_store.get_session_info(session.session_id)
-
-        # Handle case where session not found in index
-        created_str = info.created_at if info else "Unknown"
-
-        lines = [
-            f"**Session ID:** `{session.session_id}`",
-            f"**Agent:** {session.agent.agent_def.name} (`{session.agent.agent_def.id}`)",
-            f"**Created:** {created_str}",
-            f"**Messages:** {len(session.state.messages)}",
         ]
         return "\n".join(lines)
