@@ -24,7 +24,6 @@ class SessionCommand(Command):
             f"**Agent:** {session.agent.agent_def.name} (`{session.agent.agent_def.id}`)",
             f"**Created:** {created_str}",
             f"**Messages:** {len(session.state.messages)}",
-            f"**Source:** `{session.source}`",
         ]
         return "\n".join(lines)
 

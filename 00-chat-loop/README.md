@@ -49,21 +49,21 @@ class ChatLoop:
 
     async def run(self) -> None:
         """Run the interactive chat loop."""
-        rprint(
+        self.console.print(
             Panel(
                 Text("Welcome to my-bot!", style="bold cyan"),
                 title="Chat",
                 border_style="cyan",
             )
         )
-        rprint("Type 'quit' or 'exit' to end the session.\n")
+        self.console.print("Type 'quit' or 'exit' to end the session.\n")
 
         try:
             while True:
                 user_input = await asyncio.to_thread(self.get_user_input)
 
                 if user_input.lower() in ("quit", "exit", "q"):
-                    rprint("\n[bold yellow]Goodbye![/bold yellow]")
+                    self.console.print("\n[bold yellow]Goodbye![/bold yellow]")
                     break
 
                 if not user_input:
@@ -73,10 +73,10 @@ class ChatLoop:
                     response = await self.session.chat(user_input)
                     self.display_agent_response(response)
                 except Exception as e:
-                    rprint(f"\n[bold red]Error:[/bold red] {e}\n")
+                    self.console.print(f"\n[bold red]Error:[/bold red] {e}\n")
 
         except (KeyboardInterrupt, EOFError):
-            rprint("\n[bold yellow]Goodbye![/bold yellow]")
+            self.console.print("\n[bold yellow]Goodbye![/bold yellow]")
 ```
 
 [src/core/agent.py](src/core/agent.py)

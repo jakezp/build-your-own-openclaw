@@ -5,7 +5,6 @@ import asyncio
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich import print as rprint
 from rich.prompt import Prompt
 from rich.text import Text
 
@@ -38,28 +37,28 @@ class ChatLoop:
 
     def display_agent_response(self, content: str) -> None:
         """Display agent response with styled prefix."""
-        prefix = Text(f"{self.agent.agent_def.id}: ", style="green")
+        prefix = Text(f"{self.agent_def.id}: ", style="green")
 
         self.console.print(prefix, end="")
         self.console.print(content)
 
     async def run(self) -> None:
         """Run the interactive chat loop."""
-        rprint(
+        self.console.print(
             Panel(
                 Text("Welcome to my-bot!", style="bold cyan"),
                 title="Chat",
                 border_style="cyan",
             )
         )
-        rprint("Type 'quit' or 'exit' to end the session.\n")
+        self.console.print("Type 'quit' or 'exit' to end the session.\n")
 
         try:
             while True:
                 user_input = await asyncio.to_thread(self.get_user_input)
 
                 if user_input.lower() in ("quit", "exit", "q"):
-                    rprint("\n[bold yellow]Goodbye![/bold yellow]")
+                    self.console.print("\n[bold yellow]Goodbye![/bold yellow]")
                     break
 
                 if not user_input:
@@ -69,10 +68,10 @@ class ChatLoop:
                     response = await self.session.chat(user_input)
                     self.display_agent_response(response)
                 except Exception as e:
-                    rprint(f"\n[bold red]Error:[/bold red] {e}\n")
+                    self.console.print(f"\n[bold red]Error:[/bold red] {e}\n")
 
         except (KeyboardInterrupt, EOFError):
-            rprint("\n[bold yellow]Goodbye![/bold yellow]")
+            self.console.print("\n[bold yellow]Goodbye![/bold yellow]")
 
 
 def chat_command(ctx: typer.Context, agent_id: str | None = None) -> None:

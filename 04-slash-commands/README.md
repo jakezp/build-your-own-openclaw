@@ -64,7 +64,7 @@ cmd_response = await self.session.command_registry.dispatch(
     user_input, self.session
 )
 if cmd_response is not None:
-    rprint(cmd_response)
+    self.console.print(cmd_response)
     continue
 
 # Normal chat
