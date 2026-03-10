@@ -8,3 +8,13 @@ llm:
   max_tokens: 2048             # Maximum response length
 
 default_agent: pickle
+
+# Web search configuration (optional)
+# Get your API key at https://brave.com/search/api/
+# websearch:
+#   provider: brave
+#   api_key: your-brave-search-api-key
+
+# Web read configuration (optional)
+# webread:
+#   provider: crawl4ai

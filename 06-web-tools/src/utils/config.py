@@ -1,7 +1,7 @@
 """Configuration management."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -25,14 +25,30 @@ class LLMConfig(BaseModel):
         return v
 
 
+class BraveWebSearchConfig(BaseModel):
+    """Configuration for web search provider."""
+
+    provider: Literal["brave"] = "brave"
+    api_key: str
+
+
+class Crawl4AIWebReadConfig(BaseModel):
+    """Configuration for web read provider."""
+
+    provider: Literal["crawl4ai"] = "crawl4ai"
+
+
 class Config(BaseModel):
-    """Main configuration for step 02."""
+    """Main configuration for step 06."""
 
     workspace: Path
     llm: LLMConfig
     default_agent: str
     agents_path: Path = Field(default=Path("agents"))
     skills_path: Path = Field(default=Path("skills"))
+    history_path: Path = Field(default=Path(".sessions"))
+    websearch: BraveWebSearchConfig | None = None
+    webread: Crawl4AIWebReadConfig | None = None
 
     @model_validator(mode="after")
     def resolve_paths(self) -> "Config":
@@ -40,6 +56,7 @@ class Config(BaseModel):
         for field_name in (
             "agents_path",
             "skills_path",
+            "history_path",
         ):
             path = getattr(self, field_name)
             if not path.is_absolute():

@@ -1,4 +1,4 @@
-"""Configuration management for step 00."""
+"""Configuration management."""
 
 from pathlib import Path
 from typing import Any

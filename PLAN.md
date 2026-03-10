@@ -353,34 +353,7 @@ class ContextGuard:
 
 ---
 
-### Step 06: Config Hot Reload
-
-**Problem:** Need to restart to test AGENT.md changes
-
-**What to Build:**
-- File watcher (watchdog)
-- Reload AGENT.md on change
-- Hot reload trigger
-
-**Pickle-bot References:**
-- `utils/config_watcher.py` - File watching
-- `core/agent_def.py` - Reloading
-
-**Implementation Notes:**
-- Use watchdog library for file watching
-- Watch AGENT.md files for changes
-- Reload agent definition on file change
-- Notify agent of reload in chat
-- Keep session history on reload
-
-**Alternative Approaches:**
-1. No hot reload, always restart (simpler, slower development)
-2. Polling instead of file watcher (simpler, less efficient)
-3. Manual reload command only (less convenient)
-
----
-
-### Step 07: Web Tools - Access the Internet
+### Step 06: Web Tools - Access the Internet
 
 **Problem:** Agent can't search the web or read URLs
 
@@ -410,7 +383,7 @@ class ContextGuard:
 
 ## Phase 2: Event-Driven Architecture
 
-### Step 08: Event-Driven - The Great Refactor
+### Step 07: Event-Driven - The Great Refactor
 
 **Problem:** Direct calls make it hard to scale and add features
 
@@ -438,6 +411,35 @@ class ContextGuard:
 1. Keep direct calls (simpler, less scalable)
 2. Use message queue (Redis, RabbitMQ) (more complex, more scalable)
 3. Use callback pattern (simpler, less flexible)
+
+---
+
+### Step 08: Config Hot Reload
+
+**Problem:** Need to restart to test config changes
+
+**What to Build:**
+- File watcher (watchdog)
+- Reload config.*.yaml on change
+- Hot reload trigger
+- EventBus integration for reload notifications
+
+**Pickle-bot References:**
+- `utils/config_watcher.py` - File watching
+- `core/config.py` - Config reloading
+
+**Implementation Notes:**
+- Use watchdog library for file watching
+- Watch config.*.yaml files for changes
+- Reload config on file change
+- Emit event on config change via EventBus
+- Notify agent of reload in chat
+- Keep session history on reload
+
+**Alternative Approaches:**
+1. No hot reload, always restart (simpler, slower development)
+2. Polling instead of file watcher (simpler, less efficient)
+3. Manual reload command only (less convenient)
 
 ---
 

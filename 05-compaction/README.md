@@ -93,4 +93,4 @@ uv run your-own-bot chat
 
 ## What's Next
 
-[Step 06: Config Hot Reload](../06-config-hot-reload/) - Reload AGENT.md on file changes without restart
+[Step 06: Web Tools](../06-web-tools/) - Add web search and URL reading capabilities
