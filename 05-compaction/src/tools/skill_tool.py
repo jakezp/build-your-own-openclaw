@@ -1,0 +1,66 @@
+"""Skill tool factory for creating dynamic skill tool."""
+
+from typing import TYPE_CHECKING
+
+from src.tools.base import tool
+
+if TYPE_CHECKING:
+    from src.core.agent import AgentSession
+    from src.core.skill_loader import SkillLoader
+
+
+def create_skill_tool(skill_loader: "SkillLoader"):
+    """Factory function to create skill tool with dynamic schema.
+
+    Args:
+        skill_loader: SkillLoader instance for discovering and loading skills
+
+    Returns:
+        Async tool function for loading skills, or None if no skills available
+    """
+    skill_metadata = skill_loader.discover_skills()
+
+    if not skill_metadata:
+        return None
+
+    # Build XML description of available skills
+    skills_xml = "<skills>\n"
+    for meta in skill_metadata:
+        skills_xml += f'  <skill name="{meta.name}">{meta.description}</skill>\n'
+    skills_xml += "</skills>"
+
+    # Build enum of skill IDs
+    skill_enum = [meta.id for meta in skill_metadata]
+
+    @tool(
+        name="skill",
+        description=f"Load and invoke a specialized skill. {skills_xml}",
+        parameters={
+            "type": "object",
+            "properties": {
+                "skill_name": {
+                    "type": "string",
+                    "enum": skill_enum,
+                    "description": "The name of the skill to load",
+                }
+            },
+            "required": ["skill_name"],
+        },
+    )
+    async def skill_tool(skill_name: str, session: "AgentSession") -> str:
+        """Load and return skill content.
+
+        Args:
+            skill_name: The ID of the skill to load
+            session: The agent session context
+
+        Returns:
+            Skill content or error message
+        """
+        try:
+            skill_def = skill_loader.load_skill(skill_name)
+            return skill_def.content
+        except Exception:
+            return f"Error: Skill '{skill_name}' not found. It may have been removed or is unavailable."
+
+    return skill_tool

@@ -74,7 +74,7 @@ class Agent:
             session_id=session_id,
             agent=self,
             messages=[],
-            history_store = self.history_store
+            history_store=self.history_store
         )
 
         session = AgentSession(

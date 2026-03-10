@@ -1,4 +1,4 @@
-"""Agent and AgentSession for step 03 with persistence support."""
+"""Agent and AgentSession for step 05 with compaction support."""
 
 import asyncio
 import json
@@ -12,6 +12,8 @@ from litellm.types.completion import (
     ChatCompletionMessageToolCallParam,
 )
 
+from src.core.commands.registry import CommandRegistry
+from src.core.context_guard import ContextGuard
 from src.core.history import HistoryStore
 from src.core.session_state import SessionState
 from src.core.skill_loader import SkillLoader
@@ -38,6 +40,7 @@ class Agent:
         self.llm = LLMProvider.from_config(agent_def.llm)
         self.skill_loader = SkillLoader.from_config(config)
         self.history_store = HistoryStore.from_config(config)
+        self.command_registry = CommandRegistry.with_builtins()
 
     def _build_tools(self) -> ToolRegistry:
         """
@@ -55,6 +58,11 @@ class Agent:
 
         return registry
 
+    def _get_token_threshold(self) -> int:
+        """Get token threshold based on model's context window."""
+        # Default to 80% of 200k context
+        return 160000
+
     def new_session(self, session_id: str | None = None) -> "AgentSession":
         """
         Create a new conversation session.
@@ -68,16 +76,27 @@ class Agent:
         session_id = session_id or str(uuid.uuid4())
         tools = self._build_tools()
 
+        # Create context guard for this session
+        context_guard = ContextGuard(
+            token_threshold=self._get_token_threshold(),
+        )
+
         state = SessionState(
             session_id=session_id,
             agent=self,
             messages=[],
-            history_store=self.history_store
+            history_store=self.history_store,
         )
 
-        session = AgentSession(agent=self, state=state, tools=tools)
+        session = AgentSession(
+            agent=self,
+            state=state,
+            context_guard=context_guard,
+            tools=tools,
+            command_registry=self.command_registry,
+        )
         self.history_store.create_session(self.agent_def.id, session_id)
-        
+
         return session
 
 
@@ -87,7 +106,9 @@ class AgentSession:
 
     agent: Agent
     state: SessionState
+    context_guard: ContextGuard
     tools: ToolRegistry
+    command_registry: CommandRegistry
     started_at: datetime = field(default_factory=datetime.now)
 
     @property
@@ -112,6 +133,9 @@ class AgentSession:
 
         while True:
             messages = self.state.build_messages()
+
+            self.state = await self.context_guard.check_and_compact(self.state)
+
             content, tool_calls = await self.agent.llm.chat(messages, tool_schemas)
 
             tool_call_dicts: list[ChatCompletionMessageToolCallParam] = [
