@@ -118,20 +118,16 @@ class Config(BaseModel):
         obj[keys[-1]] = value
 
     def _set_config_value(self, config_path: Path, key: str, value: Any) -> None:
-        """
-        Update a config value in a YAML file.
-
-        Args:
-            config_path: Path to the YAML file
-            key: Config key (supports dot notation for nested values)
-            value: New value
-        """
+        """Update a config value in a YAML file."""
         # Load existing or start fresh
         if config_path.exists():
             with open(config_path) as f:
                 data = yaml.safe_load(f) or {}
         else:
             data = {}
+
+        if isinstance(value, BaseModel):
+            value = value.model_dump()
 
         # Update the key (supports nested via dot notation)
         self._set_nested(data, key, value)
@@ -141,23 +137,11 @@ class Config(BaseModel):
             yaml.dump(data, f)
 
     def set_user(self, key: str, value: Any) -> None:
-        """
-        Update a config value in config.user.yaml.
-
-        Args:
-            key: Config key (supports dot notation, e.g., "llm.api_key")
-            value: New value
-        """
+        """Update a config value in config.user.yaml."""
         self._set_config_value(self.workspace / "config.user.yaml", key, value)
 
     def set_runtime(self, key: str, value: Any) -> None:
-        """
-        Update a runtime value in config.runtime.yaml.
-
-        Args:
-            key: Config key (supports dot notation, e.g., "session.id")
-            value: New value
-        """
+        """Update a runtime value in config.runtime.yaml."""
         self._set_config_value(self.workspace / "config.runtime.yaml", key, value)
 
     def reload(self) -> bool:
