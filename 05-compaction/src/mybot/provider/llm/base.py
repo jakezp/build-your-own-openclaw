@@ -3,10 +3,11 @@
 from dataclasses import dataclass
 from typing import Any, Optional, cast
 
-from litellm import acompletion, Choices
+from litellm import acompletion, Choices, TYPE_CHECKING
 from litellm.types.completion import ChatCompletionMessageParam as Message
 
-from mybot.utils.config import LLMConfig
+if TYPE_CHECKING:
+    from mybot.utils.config import LLMConfig
 
 
 @dataclass
@@ -39,7 +40,7 @@ class LLMProvider:
         self._settings = kwargs
 
     @classmethod
-    def from_config(cls, config: LLMConfig) -> "LLMProvider":
+    def from_config(cls, config: "LLMConfig") -> "LLMProvider":
         """Create provider from LLMConfig."""
         return cls(
             model=config.model,

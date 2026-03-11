@@ -22,7 +22,7 @@ MAX_RETRIES = 3
 
 logger = logging.getLogger(__name__)
 
-ProcessEvent = Union[InboundEvent, DispatchEvent]
+ProcessableEvent = Union[InboundEvent, DispatchEvent]
 
 
 class AgentWorker(SubscriberWorker):
@@ -36,7 +36,7 @@ class AgentWorker(SubscriberWorker):
         self.context.eventbus.subscribe(DispatchEvent, self.dispatch_event)
         self.logger.info("AgentWorker subscribed to InboundEvent and DispatchEvent events")
 
-    async def dispatch_event(self, event: ProcessEvent) -> None:
+    async def dispatch_event(self, event: ProcessableEvent) -> None:
         """Create executor task for typed event."""
         # Get agent_id from session (single source of truth)
         session_info = self.context.history_store.get_session_info(event.session_id)
@@ -55,7 +55,7 @@ class AgentWorker(SubscriberWorker):
 
         asyncio.create_task(self.exec_session(event, agent_def))
 
-    async def exec_session(self, event: ProcessEvent, agent_def) -> None:
+    async def exec_session(self, event: ProcessableEvent, agent_def) -> None:
         session_id = event.session_id
 
         try:
@@ -103,7 +103,7 @@ class AgentWorker(SubscriberWorker):
 
     async def _emit_response(
         self,
-        event: ProcessEvent,
+        event: ProcessableEvent,
         content: str,
         agent_id: str,
         error: str | None = None,
