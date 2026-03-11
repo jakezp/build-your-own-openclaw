@@ -7,7 +7,6 @@ from .agent_loader import (
 )
 from .context import SharedContext
 from .history import HistoryMessage, HistorySession, HistoryStore
-from .routing import Binding, RoutingTable
 
 __all__ = [
     "Agent",
@@ -18,6 +17,4 @@ __all__ = [
     "HistoryStore",
     "HistoryMessage",
     "HistorySession",
-    "Binding",
-    "RoutingTable",
 ]
