@@ -9,7 +9,7 @@ A step-by-step tutorial to build your own AI agent, from a simple chat loop to a
 - A `README.md` going through key components and design decision.
 - A Runnable codebase.
 
-**Example Project:** [pickle-bot](../pickle-bot/) - our reference implementation
+**Example Project:** [pickle-bot](https://github.com/czl9707/pickle-bot) - our reference implementation
 
 ## Tutorial Structure
 
