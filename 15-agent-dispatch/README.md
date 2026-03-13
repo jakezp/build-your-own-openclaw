@@ -1,61 +1,34 @@
 # Step 15: Agent Dispatch
 
-Agents can now dispatch tasks to other specialized agents via the `subagent_dispatch` tool.
+> Your Agent want friends to work with!
 
 ## Prerequisites
 
-Same as previous steps - copy the config file and add your API key:
+Same as Step 09 - copy the config file and add your API key:
 
 ```bash
 cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 # Edit config.user.yaml to add your API key
 ```
 
-## What We Built
+## What We Will Build
 
-### Architecture
-
-```
-Agent A (caller)
-      ↓
-subagent_dispatch tool called
-      ↓
-DispatchEvent published to EventBus
-      ↓
-AgentWorker picks up DispatchEvent
-      ↓
-Agent B (subagent) processes task
-      ↓
-DispatchResultEvent published
-      ↓
-Agent A receives result
-```
+<img src="15-agent-dispatch.svg" align="center" width="100%" />
 
 ## Key Components
 
-- **subagent_tool**: Factory that creates a dispatch tool with dynamic schema
-- **AgentWorker**: Subscribes to both InboundEvent and DispatchEvent
-- **DispatchEvent/DispatchResultEvent**: Event types for agent-to-agent communication
+- **subagent_tool** - Factory that creates a dispatch tool with dynamic schema
 
-
-
-[src/mybot/tools/subagent_tool.py](src/mybot/tools/subagent_tool.py) - NEW: Subagent dispatch tool
+[src/mybot/tools/subagent_tool.py](src/mybot/tools/subagent_tool.py)
 
 ```python
 def create_subagent_dispatch_tool(
     current_agent_id: str,
     context: "SharedContext",
 ) -> BaseTool | None:
-    """Factory to create subagent dispatch tool with dynamic schema."""
-
-    # Discover available agents, exclude current
     available_agents = context.agent_loader.discover_agents()
     dispatchable_agents = [a for a in available_agents if a.id != current_agent_id]
 
-    if not dispatchable_agents:
-        return None
-
-    # Build description listing available agents
     agents_desc = "<available_agents>\n"
     for agent_def in dispatchable_agents:
         agents_desc += f'  <agent id="{agent_def.id}">{agent_def.description}</agent>\n'
@@ -67,56 +40,74 @@ def create_subagent_dispatch_tool(
         parameters={...},
     )
     async def subagent_dispatch(
-        agent_id: str, task: str, session: "AgentSession", context_arg: str = ""
+        agent_id: str, task: str, session: "AgentSession", context: str = ""
     ) -> str:
-        # Create new session for subagent
-        # Publish DispatchEvent
-        # Wait for DispatchResultEvent
-        # Return result as JSON
+        agent_def = shared_context.agent_loader.load(agent_id)
+        agent = Agent(agent_def, shared_context)
+        agent_source = AgentEventSource(agent_id=current_agent_id)
+        agent_session = agent.new_session(agent_source)
+        session_id = agent_session.session_id
+
+        user_message = task
+        if context:
+            user_message = f"{task}\n\nContext:\n{context}"
+
+        loop = asyncio.get_running_loop()
+        result_future: asyncio.Future[str] = loop.create_future()
+
+        # Create temp handler that filters by session_id
+        async def handle_result(event: DispatchResultEvent) -> None:
+            if event.session_id == session_id:
+                if not result_future.done():
+                    if event.error:
+                        result_future.set_exception(Exception(event.error))
+                    else:
+                        result_future.set_result(event.content)
+
+        # Subscribe to DispatchResultEvent events
+        shared_context.eventbus.subscribe(DispatchResultEvent, handle_result)
+
+        try:
+            event = DispatchEvent(
+                session_id=session_id,
+                source=AgentEventSource(agent_id=current_agent_id),
+                content=user_message,
+                timestamp=time.time(),
+                parent_session_id=session.session_id,
+            )
+            await shared_context.eventbus.publish(event)
+
+            response = await result_future
+        finally:
+            shared_context.eventbus.unsubscribe(handle_result)
+
+        result = {"result": response, "session_id": session_id}
+        return json.dumps(result)
+
+    return subagent_dispatch
 ```
 
-[src/mybot/core/agent.py](src/mybot/core/agent.py) - Register subagent tool
+<!-- TODO mention the mechasnism here. we still rely on eventbus -->
 
-```python
-def _build_tools(self, include_post_message: bool) -> ToolRegistry:
-    # ... other tools ...
-
-    # Register subagent dispatch tool
-    subagent_tool = create_subagent_dispatch_tool(
-        self.agent_def.id, self.context
-    )
-    if subagent_tool:
-        registry.register(subagent_tool)
-
-    return registry
-```
-
-## How to Run
+## Try it out
 
 ```bash
 cd 15-agent-dispatch
 uv run my-bot chat
 
-# The subagent_dispatch tool is automatically available when:
-# 1. Multiple agents exist in default_workspace/agents/
-# 2. The current agent is not the only one
+# You: Ask Cookie to read our README.
+# pickle: Cookie has sent our README back! *purrs* 🐱
 
-# Example: Ask the main agent to delegate to a specialist
-> "Use the subagent_dispatch tool to ask the researcher agent to look up..."
+# # Step 15: Agent Dispatch
 
-# The tool schema dynamically lists available agents:
-# - agent_id: enum of dispatchable agent IDs
-# - task: the task description
-# - context: optional additional context
+# > Your Agent want friends to work with!
+# ...
 ```
 
-## Benefits
+## Notes
 
-1. **Specialization**: Route tasks to agents with specific expertise
-2. **Dynamic Schema**: Tool description lists available agents at runtime
-3. **Isolation**: Each subagent runs in its own session
-4. **Async**: Dispatch is non-blocking, uses Future for result
+<!-- TODO some other way of implementing multi-agent, like shared task lists, tmux skill -->
 
 ## What's Next
 
-[Step 16: Concurrency Control](../16-concurrency-control/) - Rate limiting and queue management
+[Step 16: Concurrency Control](../16-concurrency-control/) - Rate limiting and queue management.

@@ -87,10 +87,6 @@ class WebSocketWorker(SubscriberWorker):
         """Normalize WebSocketMessage to InboundEvent."""
         source = WebSocketEventSource(user_id=msg.source)
 
-        agent_id = msg.agent_id
-        if agent_id is None:
-            agent_id = self.context.routing_table.resolve(str(source))
-
         session_id = self._get_or_create_session_id(source)
 
         return InboundEvent(

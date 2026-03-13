@@ -1,307 +1,93 @@
-# Step 09: Channels - Multi-Platform Support
+# Step 10: WebSocket
 
-Extend the agent to support multiple messaging platforms (CLI, Telegram, Discord) through a unified channel abstraction.
+> Want to interact with you agent programatically?
+
+## Prerequisites
+
+```bash
+cp default_workspace/config.example.yaml default_workspace/config.user.yaml
+# Edit config.user.yaml to add your API key
+# Uncomment api section
+```
 
 ## What We Will Build
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                            Server                                   │
-│                                                                    │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐             │
-│  │EventBus     │  │AgentWorker   │  │DeliveryWorker│             │
-│  │             │  │              │  │              │             │
-│  └─────────────┘  └──────────────┘  └──────────────┘             │
-│         ▲                  ▲                  │                    │
-│         │                  │                  │                    │
-│         │            ┌─────┴─────┐            │                    │
-│         │            │ Agent     │            │                    │
-│         │            │ Session   │            │                    │
-│         │            └───────────┘            │                    │
-│         │                                     │                    │
-│  ┌──────┴─────────────────────────────────────┴──────┐            │
-│  │              ChannelWorker                        │            │
-│  │                                                   │            │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐          │            │
-│  │  │CLI      │  │Telegram │  │Discord  │          │            │
-│  │  │Channel  │  │Channel  │  │Channel  │          │            │
-│  │  └─────────┘  └─────────┘  └─────────┘          │            │
-│  └──────────────────────────────────────────────────┘            │
-│                                                                    │
-│  ┌──────────────────────────────────────────────────────┐        │
-│  │  RoutingTable                                        │        │
-│  │  - Maps sources to agents                            │        │
-│  │  - Manages session affinity                          │        │
-│  └──────────────────────────────────────────────────────┘        │
-└────────────────────────────────────────────────────────────────────┘
-```
+<img src="10-websocket.svg" align="center" width="100%" />
 
-**Key Components:**
-- **EventSource** - Abstract base for platform-specific event sources (CLI, Telegram, Discord)
-- **Channel** - Abstract base for messaging platforms with run/reply/stop interface
-- **ChannelWorker** - Manages multiple channels and publishes InboundEvents
-- **DeliveryWorker** - Subscribes to OutboundEvents and delivers via appropriate channel
-- **RoutingTable** - Maps sources to sessions and agents
-- **Server** - Orchestrates all workers (EventBus, AgentWorker, ChannelWorker, DeliveryWorker)
+## Key Components
 
+- **WebSocketWorker** - Manages WebSocket connections and broadcasts events
+- **WebSocket Handle** - Web server with WebSocket endpoint
 
-
-### 1. EventSource and Platform Sources ([src/mybot/core/events.py](src/mybot/core/events.py))
+[src/mybot/server/websocket_worker.py](src/mybot/server/websocket_worker.py)
 
 ```python
-class EventSource(ABC):
-    """Abstract base for all event sources."""
+class WebSocketWorker(SubscriberWorker):
+    """Manages WebSocket connections and event broadcasting."""
 
-    _registry: ClassVar[dict[str, type["EventSource"]]] = {}
-    _namespace: ClassVar[str] = ""
+    def __init__(self, context: "SharedContext"):
+        self.clients: Set[WebSocket] = set()
 
-    @property
-    def platform_name(self) -> str | None:
-        if not self.is_platform:
-            return None
-        return self._namespace.split("-", 1)[1]
+        # Auto-subscribe to event classes
+        for event_class in [InboundEvent, OutboundEvent]:
+            self.context.eventbus.subscribe(event_class, self.handle_event)
 
-    @classmethod
-    def from_string(cls, s: str) -> "EventSource":
-        """Parse string to EventSource using namespace registry."""
-        namespace = s.split(":")[0]
-        source_cls = cls._registry.get(namespace)
-        return source_cls.from_string(s)
+    async def handle_connection(self, ws: WebSocket) -> None:
+        self.clients.add(ws)
+        try:
+            await self._run_client_loop(ws)
+        finally:
+            self.clients.discard(ws)
 
+    async def handle_event(self, event: Event) -> None:
+        event_dict = {"type": event.__class__.__name__}
+        event_dict.update(dataclasses.asdict(event))
 
-@dataclass
-class CliEventSource(EventSource):
-    """Source for CLI-originated events."""
-    _namespace = "platform-cli"
-
-    def __str__(self) -> str:
-        return "platform-cli:cli-user"
+        for client in list(self.clients):
+            try:
+                await client.send_json(event_dict)
+            except Exception:
+                self.clients.discard(client)
 ```
 
-### 2. Channel Base Class ([src/mybot/channel/base.py](src/mybot/channel/base.py))
+[src/mybot/server/app.py](src/mybot/server/app.py)
 
 ```python
-class Channel(ABC, Generic[T]):
-    """Abstract base for messaging platforms."""
+def create_app(context: SharedContext) -> FastAPI:
+    app = FastAPI(title="MyBot WebSocket Server")
+    # ... wiring
 
-    @property
-    @abstractmethod
-    def platform_name(self) -> str:
-        pass
+    @app.websocket("/ws")
+    async def websocket_endpoint(websocket: WebSocket):
+        await websocket.accept()
+        if context.websocket_worker is None:
+            await websocket.close(code=1013, reason="WebSocket not available")
+            return
+        await context.websocket_worker.handle_connection(websocket)
 
-    @abstractmethod
-    async def run(self, on_message: Callable[[str, T], Awaitable[None]]) -> None:
-        """Run the channel. Blocks until stop() is called."""
-        pass
-
-    @abstractmethod
-    async def reply(self, content: str, source: T) -> None:
-        """Reply to incoming message."""
-        pass
-
-    @abstractmethod
-    async def stop(self) -> None:
-        """Stop listening and cleanup resources."""
-        pass
+    return app
 ```
 
-### 3. ChannelWorker ([src/mybot/server/channel_worker.py](src/mybot/server/channel_worker.py))
+## Try it out
 
-```python
-class ChannelWorker(Worker):
-    """Ingests messages from platforms, publishes INBOUND events."""
-
-    async def run(self) -> None:
-        """Start all channels and process incoming messages."""
-        channel_tasks = [
-            channel.run(self._create_callback(channel.platform_name))
-            for channel in self.channels
-        ]
-        await asyncio.gather(*channel_tasks)
-
-    def _create_callback(self, platform: str):
-        async def callback(message: str, source: EventSource) -> None:
-            session_id = self.context.routing_table.get_or_create_session_id(source)
-
-            event = InboundEvent(
-                session_id=session_id,
-                source=source,
-                content=message,
-            )
-            await self.context.eventbus.publish(event)
-
-        return callback
-```
-
-### 4. DeliveryWorker ([src/mybot/server/delivery_worker.py](src/mybot/server/delivery_worker.py))
-
-```python
-class DeliveryWorker(SubscriberWorker):
-    """Delivers outbound messages to platforms."""
-
-    async def handle_event(self, event: OutboundEvent) -> None:
-        """Handle an outbound message event."""
-        session_info = self._get_session_source(event.session_id)
-        source = self._get_delivery_source(session_info)
-
-        if source and source.platform_name:
-            channel = self._get_channel(source.platform_name)
-            if channel:
-                await channel.reply(event.content, source)
-
-        self.context.eventbus.ack(event)
-```
-
-### 5. RoutingTable ([src/mybot/core/routing.py](src/mybot/core/routing.py))
-
-```python
-@dataclass
-class RoutingTable:
-    """Routes sources to agents using regex bindings."""
-
-    def get_or_create_session_id(self, source: EventSource) -> str:
-        """Get existing or create new session_id for source."""
-        source_str = str(source)
-
-        # Check for existing session (affinity)
-        source_session = self._context.config.sources.get(source_str)
-        if source_session:
-            return source_session.session_id
-
-        # Create new session
-        agent_id = self.resolve(source_str)
-        agent_def = self._context.agent_loader.load(agent_id)
-        agent = Agent(agent_def, self._context)
-        session = agent.new_session(source)
-
-        # Cache session
-        self._context.config.set_runtime(
-            f"sources.{source_str}", SourceSessionConfig(session_id=session.session_id)
-        )
-
-        return session.session_id
-```
-
-### 5. Server Updates ([src/mybot/server/server.py](src/mybot/server/server.py))
-
-```python
-class Server:
-    """Orchestrates workers with queue-based communication."""
-
-    def _setup_workers(self) -> None:
-        # Create WebSocketWorker first and attach to context
-        ws_worker = WebSocketWorker(self.context)
-        self.context.websocket_worker = ws_worker
-
-        self.workers = [
-            self.context.eventbus,
-            AgentWorker(self.context),
-            DeliveryWorker(self.context),
-            ws_worker,  # WebSocketWorker added to workers
-        ]
-
-        if self.context.config.channels.enabled:
-            self.workers.append(ChannelWorker(self.context))
-
-    async def run(self) -> None:
-        self._setup_workers()
-        self._start_workers()
-
-        # Start API server if configured
-        if self.context.config.server:
-            self._api_task = asyncio.create_task(self._run_api())
-
-        await self._monitor_workers()
-
-    async def _run_api(self) -> None:
-        """Run the WebSocket API server."""
-        app = create_app(self.context)
-        config = uvicorn.Config(
-            app,
-            host=self.context.config.server.host,
-            port=self.context.config.server.port,
-        )
-        server = uvicorn.Server(config)
-        await server.serve()
-```
-
-    async def run(self) -> None:
-        self._setup_workers()
-        self._start_workers()
-        await self._monitor_workers()
-```
-
-## How to Run
-
-**Start server with WebSocket:**
 ```bash
 cd 10-websocket
 uv run my-bot server
+
+# INFO:     Application startup complete.
+# INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 
-The server will start on http://0.0.0.0:8000 (configurable in config.user.yaml):
-- **Web UI**: http://localhost:8000/
-- **WebSocket**: ws://localhost:8000/ws
+In another shell
 
-**Chat via WebSocket client:**
-```javascript
-const ws = new WebSocket('ws://localhost:8000/ws');
-
-// Send message
-ws.send(JSON.stringify({
-  source: "user-123",
-  content: "Hello, agent!"
-}));
-
-// Receive events
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log(data.type, data.content);
-};
+``` bash
+wscat -c ws://localhost:8000/ws
+> {"source": "test", "content": "Hello, Pickle!"}
+< {"type":"InboundEvent","session_id":"c8419b2b-fc20-49a6-8fd7-79a00eeb71c5","source":"platform-ws:test","content":"Hello, Pickle!","timestamp":1773369408.214437,"retry_count":0}
+< {"type":"OutboundEvent","session_id":"c8419b2b-fc20-49a6-8fd7-79a00eeb71c5","source":"agent:pickle","content":"*waves paws excitedly* Hello there! 🐱\n\nI'm Pickle, your friendly cat assistant!","timestamp":1773369422.7538216,"error":null}
+>
 ```
-
-**Or use the built-in web UI** by opening http://localhost:8000/ in your browser.
-
-## Architecture Notes
-
-**Event Flow:**
-1. User sends message via platform (CLI, Telegram, Discord)
-2. Channel receives message and creates EventSource
-3. ChannelWorker creates/picks session via RoutingTable
-4. ChannelWorker publishes InboundEvent to EventBus
-5. AgentWorker processes event and generates response
-6. AgentWorker publishes OutboundEvent to EventBus
-7. DeliveryWorker receives OutboundEvent
-8. DeliveryWorker looks up session's source and sends via appropriate channel
-
-**Session Affinity:**
-- Each EventSource (e.g., "platform-telegram:123:456") maps to one session
-- First message creates session, subsequent messages reuse it
-- Session ID cached in config.runtime.yaml
-- Enables persistent conversations across restarts
-
-**Multi-Agent Routing:**
-- RoutingTable matches sources to agents via regex patterns
-- Enables different agents for different platforms/users
-- Falls back to default_agent if no match
 
 ## What's Next
 
-Step 10 will add **WebSocket UI** - real-time web interface for interacting with agents.
-
-```python
-class DeliveryWorker(SubscriberWorker):
-    """Delivers outbound messages to platforms."""
-
-    async def handle_event(self, event: OutboundEvent) -> None:
-        """Handle an outbound message event."""
-        session_info = self._get_session_source(event.session_id)
-        source = self._get_delivery_source(session_info)
-
-        if source and source.platform_name:
-            channel = self._get_channel(source.platform_name)
-            if channel:
-                await channel.reply(event.content, source)
-
-        self.context.eventbus.ack(event)
-```
+[Step 11: Multi-Agent Routing](../11-multi-agent-routing/) - Route messages to specialized agents.

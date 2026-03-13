@@ -1,8 +1,19 @@
-# Step 11: Multi-Agent Routing - Right Agent for Right Job
+# Step 11: Multi-Agent Routing
 
-Route incoming messages to specialized agents based on source patterns.
+> Route right job to right agent.
+
+## Prerequisites
+
+Same as Step 10 - copy the config file and add your API key:
+
+```bash
+cp default_workspace/config.example.yaml default_workspace/config.user.yaml
+# Edit config.user.yaml to add your API keys
+```
 
 ## What We Will Build
+
+<img src="11-multi-agent-routing.svg" align="center" width="100%" />
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -40,74 +51,14 @@ Route incoming messages to specialized agents based on source patterns.
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key Components:**
+## Key Components
+
+- **AgentLoader** - Agent Discoveries for multi agent definition support
 - **RoutingTable** - Routes sources to agents using regex bindings with tiered specificity
 - **Binding** - A source pattern + agent mapping with automatic tier computation
-- **AgentLoader.discover_agents()** - Scans agents directory to find all available agents
-- **CLI Commands** - `routing`, `binding`, `agents` for managing multi-agent setup
+- **New Commands** - `/route`, `/bindings`, `/agents` for managing multi-agent setup
 
-
-
-### 1. RoutingTable ([src/mybot/core/routing.py](src/mybot/core/routing.py))
-
-```python
-@dataclass
-class Binding:
-    """A routing binding that matches sources to agents."""
-    agent: str
-    value: str
-    tier: int  # 0=exact, 1=specific regex, 2=wildcard
-    pattern: Pattern  # Compiled regex
-
-@dataclass
-class RoutingTable:
-    """Routes sources to agents using regex bindings."""
-
-    def resolve(self, source: str) -> str:
-        """Return agent_id for source, falling back to default_agent."""
-        for binding in self._load_bindings():
-            if binding.pattern.match(source):
-                return binding.agent
-        return self.context.config.default_agent
-
-    def get_or_create_session_id(self, source: EventSource) -> str:
-        """Get existing or create new session_id for source."""
-        # Check cache first (session affinity)
-        source_session = self.context.config.sources.get(str(source))
-        if source_session:
-            return source_session.session_id
-
-        # Resolve agent and create new session
-        agent_id = self.resolve(str(source))
-        agent_def = self.context.agent_loader.load(agent_id)
-        agent = Agent(agent_def, self.context)
-        session = agent.new_session(source)
-
-        # Cache for future messages
-        self.context.config.set_runtime(
-            f"sources.{str(source)}", SourceSessionConfig(session_id=session.session_id)
-        )
-        return session.session_id
-```
-
-### 2. Binding Tiers ([src/mybot/core/routing.py](src/mybot/core/routing.py))
-
-Bindings are sorted by specificity:
-- **Tier 0**: Exact literal (no regex special chars) - highest priority
-- **Tier 1**: Specific regex (anchors, character classes)
-- **Tier 2**: Wildcard (`.`, `.*`) - lowest priority
-
-```python
-def _compute_tier(self) -> int:
-    """Compute specificity tier."""
-    if not any(c in self.value for c in r".*+?[]()|^$"):
-        return 0  # Exact match
-    if ".*" in self.value:
-        return 2  # Wildcard
-    return 1  # Specific regex
-```
-
-### 3. Agent Discovery ([src/mybot/core/agent_loader.py](src/mybot/core/agent_loader.py))
+[src/mybot/core/agent_loader.py](src/mybot/core/agent_loader.py)
 
 ```python
 class AgentLoader:
@@ -118,15 +69,68 @@ class AgentLoader:
         )
 ```
 
-### 4. Config Updates ([src/mybot/utils/config.py](src/mybot/utils/config.py))
+Define customized agent in `<workspace>/agents/<agent_id>/AGENT.md`
+
+[src/mybot/core/routing.py](src/mybot/core/routing.py)
 
 ```python
-class Config(BaseModel):
-    # ... existing fields ...
-    routing: dict[str, Any] = Field(default_factory=lambda: {"bindings": []})
+@dataclass
+class Binding:
+    agent: str
+    value: str
+    tier: int 
+    pattern: Pattern  # Compiled regex
+
+    def _compute_tier(self) -> int:
+        """Compute specificity tier."""
+        if not any(c in self.value for c in r".*+?[]()|^$"):
+            return 0  # Exact match
+        if ".*" in self.value:
+            return 2  # Wildcard
+        return 1  # Specific regex
+
+@dataclass
+class RoutingTable:
+    def _load_bindings(self) -> list[Binding]:
+        bindings_data = self.context.config.routing.get("bindings", [])
+
+        bindings_with_order = [
+            (Binding(agent=b["agent"], value=b["value"]), i)
+            for i, b in enumerate(bindings_data)
+        ]
+        bindings_with_order.sort(key=lambda x: (x[0].tier, x[1]))
+        self.bindings = [b for b, _ in bindings_with_order]
+
+        return self.bindings
+
+    def resolve(self, source: str) -> str:
+        for binding in self._load_bindings():
+            if binding.pattern.match(source):
+                return binding.agent
+        return self.context.config.default_agent
+
+    def get_or_create_session_id(self, source: EventSource) -> str:
+        source_session = self.context.config.sources.get(str(source))
+        if source_session:
+            return source_session.session_id
+
+        # Resolve agent and create new session
+        agent_id = self.resolve(str(source))
+        agent_def = self.context.agent_loader.load(agent_id)
+        agent = Agent(agent_def, self.context)
+        session = agent.new_session(source)
+
+        self.context.config.set_runtime(
+            f"sources.{str(source)}", SourceSessionConfig(session_id=session.session_id)
+        )
+        return session.session_id
 ```
 
-### 5. ChannelWorker Integration ([src/mybot/server/channel_worker.py](src/mybot/server/channel_worker.py))
+- **Tiered Routing Rules**: Find rules matching inbound source, starting from most specific rules.
+- **Default Fallback**: Fall back to global default agent if no rules match.
+
+
+[src/mybot/server/channel_worker.py](src/mybot/server/channel_worker.py)
 
 ```python
 async def callback(message: str, source: EventSource) -> None:
@@ -140,87 +144,24 @@ async def callback(message: str, source: EventSource) -> None:
     await self.context.eventbus.publish(event)
 ```
 
-## How to Run
+## Try it out
 
-**List available agents:**
 ```bash
 cd 11-multi-agent-routing
-uv run my-bot agents list
+uv run my-bot agents chat
+
+# You: /agent
+# pickle: **Agents:**
+# - `cookie`: Memory manager for storing, organizing, and retrieving memories
+# - `pickle`: A friendly cat assistant talk to user directly, managing daily tasks. (current)
+
+# You: /bindings
+# pickle: No routing bindings configured.
+
+# You: /route platform-ws:* cookie
+# pickle: ✓ Route bound: `platform-ws:*` → `cookie`
 ```
-
-**Show routing bindings:**
-```bash
-uv run my-bot routing list
-```
-
-**Add a routing binding:**
-```bash
-# Route all Telegram messages to cookie agent
-uv run my-bot routing add "platform-telegram:.*" cookie
-
-# Route specific CLI user to pickle agent
-uv run my-bot binding set "platform-cli:alice" pickle
-```
-
-**Start server with routing:**
-```bash
-uv run my-bot server
-```
-
-Messages will be routed based on your bindings. Unmatched sources fall back to `default_agent`.
-
-## CLI Commands
-
-### `routing` - Manage Routing Bindings
-
-```bash
-my-bot routing list              # Show all bindings
-my-bot routing add <pattern> <agent>  # Add binding
-my-bot routing clear             # Remove all bindings
-```
-
-### `binding` - Quick Source Binding
-
-```bash
-my-bot binding set <source> <agent>   # Bind source to agent
-my-bot binding unset <source>         # Remove binding
-```
-
-### `agents` - Agent Management
-
-```bash
-my-bot agents list              # List all agents
-my-bot agents show <agent-id>   # Show agent details
-```
-
-## Architecture Notes
-
-**Routing Flow:**
-1. Message arrives at ChannelWorker
-2. ChannelWorker calls `routing_table.get_or_create_session_id(source)`
-3. RoutingTable checks cache for existing session (session affinity)
-4. If no cache, RoutingTable resolves agent from bindings
-5. New session created with resolved agent
-6. Session cached for future messages from same source
-
-**Binding Configuration:**
-Bindings are stored in `config.user.yaml`:
-
-```yaml
-routing:
-  bindings:
-    - agent: cookie
-      value: "platform-telegram:.*"
-    - agent: pickle
-      value: "platform-cli:alice"
-```
-
-**Session Affinity:**
-- First message creates session with resolved agent
-- Subsequent messages from same source use cached session
-- Ensures conversation continuity
-- Cache stored in `config.runtime.yaml`
 
 ## What's Next
 
-Step 12 will add **Cron + Heartbeat** - scheduled tasks and health monitoring.
+[Step 12: Cron + Heartbeat](../12-cron-heartbeat/) - Scheduled tasks and health monitoring.

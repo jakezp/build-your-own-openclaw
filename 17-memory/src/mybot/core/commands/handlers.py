@@ -1,5 +1,6 @@
 """Built-in slash command handlers."""
 
+import re
 from typing import TYPE_CHECKING
 
 from mybot.core.commands.base import Command
@@ -105,7 +106,7 @@ class AgentCommand(Command):
             lines = ["**Agents:**"]
             for agent in agents:
                 marker = " (current)" if agent.id == session.agent.agent_def.id else ""
-                lines.append(f"- `{agent.id}`: {agent.name}{marker}")
+                lines.append(f"- `{agent.id}`: {agent.description}{marker}")
             return "\n".join(lines)
 
         # Show specific agent details
