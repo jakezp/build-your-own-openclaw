@@ -55,3 +55,7 @@ cleanup_docstrings.py
 compare_steps.py
 generate_diff.sh
 **/DIFF*.md
+.worktrees/
+
+# build time populate
+web/public/steps
