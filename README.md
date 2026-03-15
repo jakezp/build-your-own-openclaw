@@ -59,7 +59,8 @@ Before running any step, you need to configure your API keys:
    ```
 
 2. **Edit `config.user.yaml`** with your API keys:
-   - See [LiteLLM providers](https://docs.litellm.ai/docs/providers)
+   - See [LiteLLM providers](https://docs.litellm.ai/docs/providers) for the full list of supported providers
+   - Check out [Provider Examples](PROVIDER_EXAMPLES.md) for some examples
 
 3. Just follow each steps, read and try it out.
 
