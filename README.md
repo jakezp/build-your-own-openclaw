@@ -44,7 +44,7 @@ Add scheduled tasks, agent collaboration, and intelligent routing.
 ### Phase 4: Production & Scale (Steps 17-18)
 Features for reliability and long-term memory.
 
-- [**16-concurrency-control**](./16-concurrency-control/) - Too many Pickle is running at the same time?
+- [**16-concurrency-control**](./16-concurrency-control/) - Too many Pickle are running at the same time?
 - [**17-memory**](./17-memory/) - Remember me!
 
 ## How to Use This Tutorial
@@ -63,16 +63,6 @@ Before running any step, you need to configure your API keys:
    - Check out [Provider Examples](PROVIDER_EXAMPLES.md) for some examples
 
 3. Just follow each steps, read and try it out.
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=czl9707%2Fbuild-your-own-openclaw&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=czl9707/build-your-own-openclaw&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=czl9707/build-your-own-openclaw&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=czl9707/build-your-own-openclaw&type=date&legend=top-left" />
- </picture>
-</a>
 
 ## Contributing
 
