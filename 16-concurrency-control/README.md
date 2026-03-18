@@ -1,6 +1,6 @@
 # Step 16: Concurrency Control
 
-> Too many Pickle is running at the same time?
+> Too many Pickle are running at the same time?
 
 ## Prerequisites
 
