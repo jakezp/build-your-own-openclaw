@@ -1,6 +1,6 @@
 # Step 06: Web Tools
 
-> Your Agent want to see the bigger world.
+> Your Agent wants to see the bigger world.
 > At the root, they are just two new tools.
 
 ## Prerequisites
@@ -8,11 +8,13 @@
 ```bash
 cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 # Edit config.user.yaml to add your API key
-# Uncommend websearch and webread sections
+# Uncomment websearch and webread sections
 # Add your websearch api key
 ```
 
 ## What We Will Build
+
+An LLM may know how to write Python, but it cannot know the latest trends in the Python ecosystem. This opens up the world beyond the local file system and the LLM's training data.
 
 <img src="06-web-tools.svg" align="center" width="100%" />
 

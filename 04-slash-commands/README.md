@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We will Build?
 
+Deterministic functionality invoked in chat, such as `/help`, `/skills`, and `/session` .
+
 ### Architecture
 
 <img src="04-slash-commands.svg" align="center" width="100%" />

@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+Rich system prompts assembled from multiple layers—identity, personality, workspace context, runtime info. 
+
 <img src="13-multi-layer-prompts.svg" align="center" width="100%" />
 
 ## Key Components

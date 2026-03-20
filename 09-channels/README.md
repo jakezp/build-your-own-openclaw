@@ -11,6 +11,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 ```
 ## What We Will Build
 
+Now you can talk to your agent from Telegram, Discord, or any platform. 
+
 <img src="09-channels.svg" align="center" width="100%" />
 
 - User sends message via platform (Telegram, Discord)

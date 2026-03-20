@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We will Build?
 
+The foundation of any AI agent, a simple chat loop that takes user input and gets responses from the LLM.
+
 <img src="00-chat-loop.svg" align="center" width="100%" />
 
 ## Key Components

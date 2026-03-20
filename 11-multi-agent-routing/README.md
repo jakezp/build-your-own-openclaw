@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+Route messages to different agents based on where they come from. 
+
 <img src="11-multi-agent-routing.svg" align="center" width="100%" />
 
 ## Key Components

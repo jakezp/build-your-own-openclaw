@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+The agent can now initiate messages to you, not just respond, especially when running in a cron job context.
+
 <img src="14-post-message-back.svg" align="center" width="100%" />
 
 ## Key Components

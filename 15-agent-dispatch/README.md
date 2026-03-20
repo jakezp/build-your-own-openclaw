@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+Agents can delegate work to other agents. 
+
 <img src="15-agent-dispatch.svg" align="center" width="100%" />
 
 ## Key Components

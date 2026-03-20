@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+A major architectural shift. The event bus pattern that decouples message sources from agent execution, setting the groundwork for later steps.
+
 <img src="07-event-driven.svg" align="center" width="100%" />
 
 ## Key Components

@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+Scheduled tasks—the agent can run jobs on a cron schedule. 
+
 <img src="12-cron-heartbeat.svg" align="center" width="100%" />
 
 
@@ -61,7 +63,7 @@ class CronWorker(Worker):
 
 [default_workspace/crons/hello-world/CRON.md](../default_workspace/skills/cron-ops/SKILL.md)
 
-The Cron Operation functionaliry is implemented using the **SKILL system** rather than registering dedicated tools which avoids bloating the tool registry.
+The Cron Operation functionality is implemented using the **SKILL system** rather than registering dedicated tools which avoids bloating the tool registry.
 
 ## Try it out
 

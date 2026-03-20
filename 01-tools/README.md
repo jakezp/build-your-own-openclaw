@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We will Build?
 
+Giving the agent the ability to actually *do* things, from chatting only to taking real actions.
+
 <img src="01-tools.svg" align="center" width="100%" />
 
 ## Key Components

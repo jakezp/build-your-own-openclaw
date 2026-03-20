@@ -15,6 +15,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We will Build?
 
+Skills are lazy loaded capabilities at runtime. It isn't something Openclaw invented, but an open standard. Reference the [official document](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) for more info.
+
 <img src="02-skills.svg" align="center" width="100%" />
 
 ## Key Components

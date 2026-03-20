@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We will Build?
 
+Long conversations eventually hit context limits. Compaction solves this by summarizing old messages and rolling over to a fresh session.
+
 <img src="05-compaction.svg" align="center" width="100%" />
 
 - Context over threshold?

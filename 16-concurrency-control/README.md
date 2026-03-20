@@ -13,7 +13,9 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
-Some specialized agent will be problematic to run concurrently. We need some mechanism to limit this.
+Prevent resource exhaustion by limiting how many instances of an agent can run simultaneously.
+
+<img src="16-concurrency-control.svg" align="center" width="100%" />
 
 ## Key Components
 

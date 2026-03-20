@@ -13,6 +13,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+Long-term memory across all conversations. 
+
 ```
 pickle: @cookie Do you know <topic> about user?
 cookie: Yes, <content>.

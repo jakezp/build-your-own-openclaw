@@ -12,6 +12,8 @@ cp default_workspace/config.example.yaml default_workspace/config.user.yaml
 
 ## What We Will Build
 
+Programmatic access via WebSocket. 
+
 <img src="10-websocket.svg" align="center" width="100%" />
 
 ## Key Components
