@@ -58,3 +58,8 @@ generate_diff.sh
 
 # build time populate
 web/public/steps
+
+# agents
+.agents/
+skills-lock.json
+.claude/
