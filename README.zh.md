@@ -2,6 +2,8 @@
 
 从简单的聊天循环开始，一步步搭建 [OpenClaw](https://github.com/openclaw/openclaw) 的精简版。
 
+<img src="Cover.png" style="width: 100%;">
+
 ## 概述
 
 18 个步骤，每步包含：

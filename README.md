@@ -2,6 +2,8 @@
 
 A step-by-step tutorial to build your own AI agent, from a simple chat loop to a lightweight version of [OpenClaw](https://github.com/openclaw/openclaw).
 
+<img src="Cover.png" style="width: 100%;">
+
 ## Overview
 
 **18 progressive steps** that teach you how to build an minimal version of OpenClaw. Each step includes:
