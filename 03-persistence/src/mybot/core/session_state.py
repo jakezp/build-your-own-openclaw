@@ -1,12 +1,13 @@
 """Session state container with persistence helpers."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-from litellm.types.completion import ChatCompletionMessageParam as Message
+from typing import TYPE_CHECKING, Any
 
 from mybot.core.history import HistoryMessage
 
+
+
+Message = dict[str, Any]
 if TYPE_CHECKING:
     from mybot.core.agent import Agent
     from mybot.core.history import HistoryStore

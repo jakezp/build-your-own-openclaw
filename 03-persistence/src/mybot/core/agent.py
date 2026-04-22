@@ -5,12 +5,7 @@ import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
-
-from litellm.types.completion import (
-    ChatCompletionMessageParam as Message,
-    ChatCompletionMessageToolCallParam,
-)
+from typing import TYPE_CHECKING, Any
 
 from mybot.core.history import HistoryStore
 from mybot.core.session_state import SessionState
@@ -19,6 +14,9 @@ from mybot.provider.llm import LLMProvider, LLMToolCall
 from mybot.tools.registry import ToolRegistry
 from mybot.tools.skill_tool import create_skill_tool
 
+
+
+Message = dict[str, Any]
 if TYPE_CHECKING:
     from mybot.core.agent_loader import AgentDef
     from mybot.utils.config import Config
@@ -88,7 +86,7 @@ class AgentSession:
             messages = self.state.build_messages()
             content, tool_calls = await self.agent.llm.chat(messages, tool_schemas)
 
-            tool_call_dicts: list[ChatCompletionMessageToolCallParam] = [
+            tool_call_dicts: list[dict[str, Any]] = [
                 {
                     "id": tc.id,
                     "type": "function",

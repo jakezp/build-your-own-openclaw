@@ -59,6 +59,10 @@ Concurrency control can be implemented using different granularities depending o
 - **By Source** - Limits concurrent requests from the same user/client. Useful for preventing abuse or ensuring fair resource distribution.
 - **By Priority** - Different concurrency limits for different priority levels. High-priority tasks could have reserved capacity.
 
+### Note on ChatGPT OAuth concurrency (file-lock future work)
+
+Step 09 and 10 added in-process `asyncio.Lock` serialization for the shared `ChatGPTOAuth` instance. That lock is still in use in this step and remains sufficient for a single-process deployment. For a multi-process or cross-host deployment where several workers share the Token_Store, an OS-level file lock (`fcntl.flock` on POSIX, `msvcrt.locking` on Windows) around the read/refresh/write would be the next hardening step. That is out of scope for the current tutorial but is a good follow-up spec.
+
 ## What's Next
 
 [Step 17: Memory](../17-memory/) - Long-term knowledge system.

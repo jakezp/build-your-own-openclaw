@@ -3,12 +3,12 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
-
-from litellm.types.completion import ChatCompletionMessageParam as Message
+from typing import Any, TYPE_CHECKING
 
 from mybot.provider.llm import LLMProvider
 from mybot.core.session_state import SessionState
+
+Message = dict[str, Any]
 
 
 if TYPE_CHECKING:

@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 
 from mybot.cli.chat import chat_command
+from mybot.provider.llm.oauth import ChatGPTOAuth
 from mybot.utils.config import Config
 
 app = typer.Typer(
@@ -39,6 +40,8 @@ def main(
 ) -> None:
     """Configuration is loaded from workspace/config.user.yaml by default."""
     workspace_path = ctx.obj["workspace"]
+    if ctx.invoked_subcommand == "login":
+        return  # login doesn't need config
     config_file = workspace_path / "config.user.yaml"
 
     if not config_file.exists():
@@ -67,6 +70,16 @@ def chat(
 ) -> None:
     """Start interactive chat session."""
     chat_command(ctx, agent_id=agent)
+
+
+@app.command("login")
+def login(ctx: typer.Context) -> None:
+    """Run one-time ChatGPT OAuth login and write the token store."""
+    result = ChatGPTOAuth().login()
+    console.print(
+        f"[green]Logged in as[/green] {result.account_id or '<unknown>'}\n"
+        f"Token store: [cyan]{result.token_store_path}[/cyan]"
+    )
 
 
 if __name__ == "__main__":

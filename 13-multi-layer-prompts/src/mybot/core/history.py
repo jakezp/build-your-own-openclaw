@@ -7,9 +7,9 @@ from typing import Any, Literal, TYPE_CHECKING
 from pydantic import BaseModel, Field, field_validator
 
 from mybot.core.events import EventSource
-from litellm.types.completion import ChatCompletionMessageParam as Message
 
 
+Message = dict[str, Any]
 if TYPE_CHECKING:
     from mybot.utils.config import Config
 

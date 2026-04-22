@@ -6,9 +6,17 @@
 
 ```bash
 cp default_workspace/config.example.yaml default_workspace/config.user.yaml
-# Edit config.user.yaml to add your API key
-# Uncomment api section
+# Run `my-bot login` once (see top-level README).
 ```
+
+## Note on ChatGPT OAuth concurrency
+
+The WebSocket worker serves many clients concurrently from one process.
+They all share a single ``ChatGPTOAuth`` instance, which uses an
+in-process ``asyncio.Lock`` to serialize token reads and refreshes.
+That's sufficient for a single-process deployment. For multi-process
+setups, step 16 discusses an OS-level file-lock as future work.
+
 
 ## What We Will Build
 

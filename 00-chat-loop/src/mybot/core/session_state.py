@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-from litellm.types.completion import ChatCompletionMessageParam as Message
+from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mybot.core.agent import Agent
+
+Message = dict[str, Any]
 
 @dataclass
 class SessionState:

@@ -6,9 +6,21 @@
 
 ```bash
 cp default_workspace/config.example.yaml default_workspace/config.user.yaml
-# Edit config.user.yaml to add your API keys
-# config Telegram Bot Token
+# Run `my-bot login` once (see top-level README).
+# Configure Telegram Bot Token / Discord webhook in config.user.yaml.
 ```
+
+## Note on ChatGPT OAuth concurrency
+
+Multiple channels run under a single process here. They share one
+``ChatGPTOAuth`` instance, which uses an in-process ``asyncio.Lock`` to
+serialize token reads and refreshes. That's sufficient for one process.
+For a multi-process setup, see the file-lock discussion in step 16.
+
+The model allowlist (``default_workspace/models.yaml``) is re-read on
+every ``Config.load()``, so step 08's hot-reload picks up edits there
+without a process restart.
+
 ## What We Will Build
 
 Now you can talk to your agent from Telegram, Discord, or any platform. 

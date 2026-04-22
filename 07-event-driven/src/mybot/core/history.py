@@ -6,8 +6,9 @@ from typing import Any, Literal, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
-from litellm.types.completion import ChatCompletionMessageParam as Message
 
+
+Message = dict[str, Any]
 if TYPE_CHECKING:
     from mybot.utils.config import Config
 

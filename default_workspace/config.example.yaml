@@ -1,27 +1,16 @@
-# LLM provider configuration, follow https://docs.litellm.ai/docs/providers for your own provider config
+# default_workspace/config.example.yaml
+#
+# This edition authenticates via ChatGPT subscription OAuth only.
+# Run `my-bot login` once to populate the token store; do NOT put
+# credentials in this file. The token store lives at
+#   ~/.config/mybot/chatgpt_oauth.json     (POSIX)
+#   %APPDATA%\mybot\chatgpt_oauth.json     (Windows)
+#
+# The accepted-model list is in ./models.yaml — edit that file to
+# add a newly-released model id.
+
 llm:
-  provider: openai              # Options: openai, anthropic, minimax, etc.
-  model: gpt-4                 # Model to use for generation, follow litellm model field
-  api_key: sk-your-openai-api-key-here  # WARNING: Replace with your actual key, never commit real keys!
-  api_base: null               # Optional: Custom API endpoint (http:// or https://)
-  temperature: 0.7
-  max_tokens: 2048
+  provider: openai
+  model: gpt-5.4
 
 default_agent: pickle
-
-# Get your API key at https://brave.com/search/api/
-# websearch:
-#   provider: brave
-#   api_key: your-brave-search-api-key
-
-# webread:
-#   provider: crawl4ai
-
-# api: {}
-
-# channels:
-#   enabled: true
-#   telegram:
-#     bot_token: your-bot-token
-#     allowed_user_ids:
-#       - "your_user_id"

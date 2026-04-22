@@ -3,7 +3,7 @@ import json
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from mybot.core.context_guard import ContextGuard
 from mybot.core.session_state import SessionState
@@ -15,11 +15,9 @@ from mybot.tools.websearch_tool import create_websearch_tool
 from mybot.tools.webread_tool import create_webread_tool
 from mybot.tools.post_message_tool import create_post_message_tool
 
-from litellm.types.completion import (
-    ChatCompletionMessageParam as Message,
-    ChatCompletionMessageToolCallParam,
-)
 
+
+Message = dict[str, Any]
 if TYPE_CHECKING:
     from mybot.core.context import SharedContext
     from mybot.core.agent_loader import AgentDef
@@ -183,7 +181,7 @@ class AgentSession:
             self.state = await self.context_guard.check_and_compact(self.state)
             content, tool_calls = await self.agent.llm.chat(messages, tool_schemas)
 
-            tool_call_dicts: list[ChatCompletionMessageToolCallParam] = [
+            tool_call_dicts: list[dict[str, Any]] = [
                 {
                     "id": tc.id,
                     "type": "function",

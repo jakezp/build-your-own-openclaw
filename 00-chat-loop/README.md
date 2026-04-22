@@ -81,23 +81,23 @@ class AgentSession:
 class LLMProvider:
     async def chat(
         self,
-        messages: list[Message],
+        messages: list[dict[str, Any]],
         **kwargs: Any,
-    ) -> str:        
-        request_kwargs: dict[str, Any] = {
-            "model": self.model,
-            "messages": messages,
-            "api_key": self.api_key,
-        }
-
-        if self.api_base:
-            request_kwargs["api_base"] = self.api_base
-        request_kwargs.update(kwargs)
-
-        response = await acompletion(**request_kwargs)
-        message = cast(Choices, response.choices[0]).message
-
-        return message.content or ""
+    ) -> str:
+        access_token, account_id = await self._resolve_credential()
+        instructions, input_items = _translate_messages(messages)
+        request = ResponsesRequest(
+            model=self.model,
+            instructions=instructions,
+            input=input_items,
+        )
+        events = self._client.stream(
+            request,
+            access_token=access_token,
+            account_id=account_id,
+        )
+        aggregated = await aggregate_stream(events)
+        return aggregated.content
 ```
 
 

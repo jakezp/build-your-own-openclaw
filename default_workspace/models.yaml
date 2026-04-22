@@ -1,0 +1,18 @@
+# default_workspace/models.yaml
+# Authoritative list of model ids the ChatGPT subscription backend currently
+# accepts for Codex. Add a new model here; do not touch Python source.
+#
+# Pattern rules use fnmatch glob syntax (* matches any chars).
+
+allowed:
+  - gpt-5.4
+  - gpt-5.4-mini
+  - gpt-5.2
+  - gpt-5.2-codex
+  - gpt-5.3-codex
+  - gpt-5.1-codex
+  - gpt-5.1-codex-max
+  - gpt-5.1-codex-mini
+
+patterns:
+  - "*codex*"

@@ -1,15 +1,11 @@
 """Context guard for proactive context window management."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Any
 
-from litellm import token_counter
-from litellm.types.completion import (
-    ChatCompletionMessageParam as Message,
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionToolMessageParam,
-)
 
+
+Message = dict[str, Any]
 if TYPE_CHECKING:
     from mybot.core.session_state import SessionState
 
@@ -26,12 +22,21 @@ class ContextGuard:
     max_tool_result_chars: int = MAX_TOOL_RESULT_CHARS
 
     def estimate_tokens(self, state: "SessionState") -> int:
-        """Estimate token count for session state."""
+        """Estimate token count for session state.
+
+        OAuth Edition: char-based heuristic (~4 chars/token for English).
+        Used only to check against ``token_threshold``, so exact precision
+        is not required.
+        """
         if not state.messages:
             return 0
-        return token_counter(
-            model=state.agent.agent_def.llm.model, messages=state.build_messages()
-        )
+        messages = state.build_messages()
+        total_chars = 0
+        for m in messages:
+            c = m.get("content") or ""
+            if isinstance(c, str):
+                total_chars += len(c)
+        return total_chars // 4
 
     async def check_and_compact(
         self,

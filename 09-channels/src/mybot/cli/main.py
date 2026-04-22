@@ -9,6 +9,7 @@ from rich.console import Console
 from mybot.cli.chat import chat_command
 from mybot.cli.server import server_command
 from mybot.utils.config import Config
+from mybot.provider.llm.oauth import ChatGPTOAuth
 
 app = typer.Typer(
     name="my-bot",
@@ -74,6 +75,18 @@ def chat(
 def server(ctx: typer.Context) -> None:
     """Start the 24/7 server for cron and messagebus execution."""
     server_command(ctx)
+
+
+
+
+@app.command("login")
+def login(ctx: typer.Context) -> None:
+    """Run one-time ChatGPT OAuth login and write the token store."""
+    result = ChatGPTOAuth().login()
+    console.print(
+        f"[green]Logged in as[/green] {result.account_id or '<unknown>'}\n"
+        f"Token store: [cyan]{result.token_store_path}[/cyan]"
+    )
 
 
 if __name__ == "__main__":
