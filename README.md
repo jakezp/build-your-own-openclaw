@@ -104,8 +104,4 @@ The file also supports a `patterns:` list of glob rules (default: `"*codex*"`), 
 
 ## Pre-Pivot Multi-Provider Version
 
-The earlier, multi-provider API-key version of the tutorial (Anthropic, Gemini, MiniMax, Grok, Z.ai, Qwen) lives in git history. It is not maintained alongside the OAuth Edition.
-
-## Contributing
-
-Each step is implemented in a separate session. Suggestions welcome.
+The multi-provider API-key version of the tutorial (Anthropic, Gemini, MiniMax, Grok, Z.ai, Qwen) lives [here](https://github.com/czl9707/build-your-own-openclaw), which this repo is forked from.
