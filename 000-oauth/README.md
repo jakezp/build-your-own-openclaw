@@ -304,12 +304,14 @@ You don't want to wait an hour for the access token to expire naturally. Simulat
 What it does:
 
 1. Backs up your Token_Store to `chatgpt_oauth.json.bak`.
-2. Rewrites `expires_at` to 30 seconds in the future.
-3. Runs `my-bot chat` in step 00 with a one-shot message.
-4. Shows the `expires_at` before and after — confirming that the refresh pushed it forward.
-5. Prints a success message if the refresh worked.
+2. Rewrites `expires_at` to 30 seconds in the future — inside the 60-second refresh safety margin.
+3. Calls `ChatGPTOAuth().access_token()` — which checks expiry, sees we're inside the margin, refreshes.
+4. Sends one raw "hello" to the Responses API via curl using the fresh token, just to prove it works end-to-end.
+5. Shows the `expires_at` before and after.
 
-Run it. Compare the `expires_at` before and after. The "before" should be 30 seconds after run time; the "after" should be about an hour after run time. That's the refresh loop in action.
+Run it. Compare the `expires_at` values. The "before" value should be ~30 seconds after run time; the "after" should be about an hour after run time. That's the refresh loop in action. You'll also see a one-line reply from the model — that's your raw chat round-trip, no agent framework required.
+
+This script is self-contained. It doesn't need `00-chat-loop` set up, doesn't need a `config.user.yaml`. Just the Token_Store you populated with `my-bot login`.
 
 ---
 
