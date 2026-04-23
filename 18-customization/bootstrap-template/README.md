@@ -1,13 +1,13 @@
-# 999 — Bootstrap Template
+# Bootstrap Template
 
 A minimal standalone skeleton for starting your own ChatGPT-OAuth agent from scratch, without any of the tutorial's 18 steps.
 
-This is the "I've learned the pattern, now I want to apply it to my own problem" starting point.
+This is the "I've learned the pattern, now I want to apply it to my own problem" starting point. It sits alongside [`../README.md`](../README.md) (the customization walkthrough).
 
 ## What's in here
 
 ```
-999-bootstrap-template/
+18-customization/bootstrap-template/
 ├── README.md                # this file
 ├── pyproject.toml           # minimal deps
 ├── src/
@@ -36,7 +36,7 @@ From here you build whatever you want.
 ### Option A — Copy it
 
 ```bash
-cp -r 999-bootstrap-template ~/myproject
+cp -r 18-customization/bootstrap-template ~/myproject
 cd ~/myproject
 
 # Rename yourpkg → the package name you want.
@@ -55,7 +55,7 @@ uv run mynewbot login
 uv run mynewbot chat
 ```
 
-See [`../CUSTOMIZATION.md`](../CUSTOMIZATION.md) tier 4 for the full rename recipe.
+See [`../README.md`](../README.md) tier 4 for the full rename recipe.
 
 ### Option B — Treat it as a library
 
@@ -123,6 +123,6 @@ When you need any of these, steal from the tutorial. The patterns are small and 
 
 ## See also
 
-- [`../000-oauth/README.md`](../000-oauth/README.md) — everything this template's `oauth.py` and `responses.py` do, explained.
-- [`../CUSTOMIZATION.md`](../CUSTOMIZATION.md) — the full customization tiers.
-- [`../OAUTH_EDITION_GUIDE.md`](../OAUTH_EDITION_GUIDE.md) — architecture overview of the OAuth Edition.
+- [`../../000-oauth/README.md`](../../000-oauth/README.md) — everything this template's `oauth.py` and `responses.py` do, explained.
+- [`../README.md`](../README.md) — the full customization tiers.
+- [`../../OAUTH_EDITION_GUIDE.md`](../../OAUTH_EDITION_GUIDE.md) — architecture overview of the OAuth Edition.

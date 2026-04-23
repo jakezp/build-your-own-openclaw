@@ -261,7 +261,7 @@ You want to start a completely new project, not based on the tutorial's 18-step 
 
 **Two approaches:**
 
-1. **Copy `999-bootstrap-template/`** — a minimal standalone skeleton. That directory is [here](./999-bootstrap-template/). Copy it wherever you want, rename per Tier 4, start building.
+1. **Copy `bootstrap-template/`** — a minimal standalone skeleton. It lives alongside this file at [`./bootstrap-template/`](./bootstrap-template/). Copy it wherever you want, rename per Tier 4, start building.
 
 2. **Write your own from scratch** using `000-oauth` as a library. Copy `oauth.py` and `responses.py` into your project; you now have login + SSE. Everything else (agent, session, tools) is yours to design. Minimum viable: a `chat()` function that takes a message, sends a Responses API request, returns the reply. ~50 lines.
 

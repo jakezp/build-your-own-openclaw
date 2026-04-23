@@ -1,189 +1,203 @@
 # Step 09: Channels
 
-> Talk to your agent from on your phone.
+> Your agent shows up on Telegram. And Discord. And the CLI. All at once.
 
 ## Prerequisites
 
+- Steps 00–08 done.
+- For Telegram: a bot token from [@BotFather](https://t.me/botfather).
+- For Discord: a bot token from the [Developer Portal](https://discord.com/developers/applications) + an invited guild.
+
 ```bash
-cp default_workspace/config.example.yaml default_workspace/config.user.yaml
-# Run `my-bot login` once (see top-level README).
-# Configure Telegram Bot Token / Discord webhook in config.user.yaml.
+cd 09-channels
+uv sync
 ```
 
 ## Note on ChatGPT OAuth concurrency
 
 Multiple channels run under a single process here. They share one
-``ChatGPTOAuth`` instance, which uses an in-process ``asyncio.Lock`` to
+`ChatGPTOAuth` instance, which uses an in-process `asyncio.Lock` to
 serialize token reads and refreshes. That's sufficient for one process.
 For a multi-process setup, see the file-lock discussion in step 16.
 
-The model allowlist (``default_workspace/models.yaml``) is re-read on
-every ``Config.load()``, so step 08's hot-reload picks up edits there
+The model allowlist (`default_workspace/models.yaml`) is re-read on
+every `Config.load()`, so step 08's hot-reload picks up edits there
 without a process restart.
 
-## What We Will Build
+## Why this step exists
 
-Now you can talk to your agent from Telegram, Discord, or any platform. 
+Your agent is stuck at the terminal. It's a CLI. If you want to talk to it from your phone, from Discord, from a group chat, from anywhere that isn't where you're sitting right now, you're out of luck.
 
-<img src="09-channels.svg" align="center" width="100%" />
+This step adds **channels** — plug-in adapters that bridge external platforms (Telegram, Discord, and more) into the event bus. Each channel:
 
-- User sends message via platform (Telegram, Discord)
-- Channel receives message and creates EventSource
-- ChannelWorker publishes InboundEvent to EventBus
-- AgentWorker processes event and generates response
-- AgentWorker publishes OutboundEvent to EventBus
-- DeliveryWorker receives OutboundEvent
-- DeliveryWorker looks up session's source and sends via appropriate channel
+- **Listens** on its platform for incoming messages.
+- **Publishes** them as `InboundEvent`s on the bus.
+- **Subscribes** to `OutboundEvent`s and routes them back to the right platform.
 
-## Key Components
+The CLI (from step 07) is now just one channel among many. Nothing special about it. The agent has no idea whether a message came from a terminal, a Telegram chat, a Discord DM, or somewhere else. It just sees `InboundEvent(session_id, content)`.
 
-- **EventSource** - Abstract base for platform-specific event sources (CLI, Telegram, Discord)
-- **Channel** - Abstract base for messaging platforms with run/reply/stop interface
-- **ChannelWorker** - Manages multiple channels and publishes InboundEvents
-- **DeliveryWorker** - Subscribes to OutboundEvents and delivers via appropriate channel
-- **Event Persistence** - Outbound Event Persistence and failure recovery preventing message lose.
+## The mental model
 
+```
+┌──────────────┐      InboundEvent      ┌──────────────┐
+│  Telegram    │ ─────────────────────► │              │
+│  Channel     │ ◄───── OutboundEvent ─ │              │
+└──────────────┘                        │              │
+                                        │              │
+┌──────────────┐      InboundEvent      │  EventBus    │      ┌─────────────┐
+│  Discord     │ ─────────────────────► │              │ ───► │ AgentWorker │
+│  Channel     │ ◄───── OutboundEvent ─ │              │      └─────────────┘
+└──────────────┘                        │              │
+                                        │              │
+┌──────────────┐      InboundEvent      │              │
+│  CLI         │ ─────────────────────► │              │
+│  Channel     │ ◄───── OutboundEvent ─ │              │
+└──────────────┘                        └──────────────┘
+```
 
-[src/mybot/channel/base.py](src/mybot/channel/base.py)
+Each channel is two things working together:
+
+- A **ChannelWorker** that runs the platform's client (Telegram bot, Discord bot, CLI input loop) and publishes inbound events.
+- A **DeliveryWorker** that subscribes to outbound events and routes them back.
+
+A message in Telegram becomes an `InboundEvent`, gets picked up by `AgentWorker`, produces an `OutboundEvent`, and the Telegram channel's delivery handler sends it back to the original chat.
+
+## Key decisions
+
+### Decision 1: each channel owns an `EventSource`
+
+An `InboundEvent` carries `session_id` and `content`. Neither tells you where to reply. A user on Telegram, a user on Discord, a user in CLI — same session_id structure, different delivery paths.
+
+We solve this with `EventSource` — a per-platform dataclass attached to inbound events:
+
+```python
+@dataclass
+class TelegramEventSource(EventSource):
+    chat_id: int
+    user_id: int
+    ...
+```
+
+The channel publishes `InboundEvent(session_id=..., content=..., source=TelegramEventSource(...))`. The agent processes the event and publishes `OutboundEvent(session_id=..., content=...)`. The Telegram `DeliveryWorker` uses the session_id to look up the last known source and reply to the right chat.
+
+### Decision 2: sessions are per-chat, not per-user
+
+A Telegram bot can be in a group chat with many users. A Discord bot can be in a guild with many channels. Each **conversation context** gets its own session.
+
+The session_id derives from the platform's conversation identifier:
+
+- Telegram: `"telegram:{chat_id}"`
+- Discord: `"discord:{channel_id}"`
+- CLI: `"cli:{hostname}"`
+
+Different platforms, same `session_id` shape. Different users on the same Telegram chat share a session — they're having a group conversation with the agent.
+
+### Decision 3: whitelisting at the channel layer
+
+Open bots get spammed. Every channel has an `is_allowed(source)` method that checks whether the sender is on the channel's whitelist. Configured per-channel in `config.user.yaml`:
+
+```yaml
+channels:
+  telegram:
+    enabled: true
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+    allowed_chat_ids: [12345, 67890]
+  discord:
+    enabled: true
+    bot_token: ${DISCORD_BOT_TOKEN}
+    allowed_user_ids: [987654321]
+```
+
+Messages from non-whitelisted sources are silently dropped at the channel layer, before they ever hit the bus.
+
+### Decision 4: outbound delivery with persistence
+
+A user sent you a message. Your agent replied. But the network blipped and Telegram didn't accept the outbound message.
+
+The `DeliveryWorker` persists failed outbound events to disk and retries them when the channel reconnects. The machinery is platform-specific but the pattern is uniform: "outbound events are not fire-and-forget; they have delivery guarantees."
+
+### Decision 5: channels are optional
+
+Same pattern as web tools in step 06. If `channels.telegram.enabled` is missing or false, the Telegram channel doesn't start. If both are disabled, only the CLI channel runs. Graceful degradation.
+
+## Read the code
+
+### 1. `src/mybot/channel/base.py` — the interface
 
 ```python
 class Channel(ABC, Generic[T]):
     @property
     @abstractmethod
-    def platform_name(self) -> str:
-        pass
+    def platform_name(self) -> str: ...
 
     @abstractmethod
-    async def run(self, on_message: Callable[[str, T], Awaitable[None]]) -> None:
-        """Run the channel. Blocks until stop() is called."""
-        pass
+    async def run(self, on_message: Callable[[str, T], Awaitable[None]]) -> None: ...
 
     @abstractmethod
-    async def reply(self, content: str, source: T) -> None:
-        """Reply to incoming message."""
-        pass
+    def is_allowed(self, source: T) -> bool: ...
 
     @abstractmethod
-    async def stop(self) -> None:
-        """Stop listening and cleanup resources."""
-        pass
+    async def reply(self, content: str, source: T) -> None: ...
+
+    @abstractmethod
+    async def stop(self) -> None: ...
 ```
 
-[src/mybot/server/channel_worker.py](src/mybot/server/channel_worker.py)
+Five methods. `run` is the long-running listener loop (blocks until `stop` is called). `reply` sends a message back to the given source. `is_allowed` checks the whitelist. `from_config(config)` is a static method that builds a list of enabled channels.
 
-```python
-class ChannelWorker(Worker):
-    async def run(self) -> None:
-        channel_tasks = [
-            channel.run(self._create_callback(channel.platform_name))
-            for channel in self.channels
-        ]
-        await asyncio.gather(*channel_tasks)
+### 2. `src/mybot/channel/telegram_channel.py` and `discord_channel.py`
 
-    def _create_callback(self, platform: str):
-        async def callback(message: str, source: EventSource) -> None:
-            session_id = self._get_or_create_session_id(source)
+Each is ~100 lines. They use the respective library (`python-telegram-bot`, `discord.py`), register a message handler, build the appropriate `EventSource`, and call `on_message(content, source)` — which is the callback the `ChannelWorker` wires to `bus.publish(InboundEvent(...))`.
 
-            event = InboundEvent(
-                session_id=session_id,
-                source=source,
-                content=message,
-            )
-            await self.context.eventbus.publish(event)
+### 3. `src/mybot/server/channel_worker.py`
 
-        return callback
+Wraps a `Channel` as a `Worker`. `run()` starts the channel's listener with a callback that publishes inbound events.
 
-    def _get_or_create_session_id(self, source: EventSource) -> str:
-        source_session = self.context.config.sources.get(str(source))
-        if source_session:
-            return source_session.session_id
+### 4. `src/mybot/server/delivery_worker.py`
 
-        agent_def = self.context.agent_loader.load(self.context.config.default_agent)
-        agent = Agent(agent_def, self.context)
-        session = agent.new_session(source)
+Subscribes to `OutboundEvent`. Maintains a per-session `EventSource` lookup (the last inbound source we saw for that session). When an outbound arrives, looks up the source and calls the channel's `reply(...)`.
 
-        # Cache the session
-        self.context.config.set_runtime(
-            f"sources.{source}", SourceSessionConfig(session_id=session.session_id)
-        )
+### 5. `src/mybot/core/events.py`
 
-        return session.session_id
-```
-
-- Each EventSource (e.g., "platform-telegram:123:456") maps to one session
-- First message creates session, subsequent messages reuse it
-- Session ID cached in config.runtime.yaml
-
-[src/mybot/server/delivery_worker.py](src/mybot/server/delivery_worker.py)
-
-```python
-class DeliveryWorker(SubscriberWorker):
-    """Delivers outbound messages to platforms."""
-
-    async def handle_event(self, event: OutboundEvent) -> None:
-        """Handle an outbound message event."""
-        session_info = self._get_session_source(event.session_id)
-        source = self._get_delivery_source(session_info)
-
-        if source and source.platform_name:
-            channel = self._get_channel(source.platform_name)
-            if channel:
-                await channel.reply(event.content, source)
-
-        self.context.eventbus.ack(event)
-```
-
-[src/mybot/core/eventbus.py](src/mybot/core/eventbus.py.py)
-
-``` python
-class EventBus(Worker):
-    async def run(self) -> None:
-        await self._recover()
-        while True:
-            # ... Dispatching Events
-
-    async def _dispatch(self, event: Event) -> None:
-        await self._persist_outbound(event)
-        await self._notify_subscribers(event)
-    
-    async def _recover(self) -> int:
-        pending_files = list(self.pending_dir.glob("*.json"))
-
-        for file_path in pending_files:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            event = deserialize_event(data)
-            await self._notify_subscribers(event)
-
-        return len(pending_files)
-
-    def ack(self, event: Event) -> None:
-        filename = f"{event.timestamp}_{event.session_id}.json"
-        final_path = self.pending_dir / filename
-        if final_path.exists():
-            final_path.unlink()
-```
-
-- **Outbound Event Persistence Flow**:
-  - `EventBus.publish()` queues event to internal asyncio queue
-  - `EventBus._dispatch()` is called for each event
-  - `_persist_outbound()` writes OutboundEvent to disk atomically (tmp file + fsync + rename)
-  - `_notify_subscribers()` delivers event to all subscribers (e.g., DeliveryWorker)
-
-- **Failure Recovery Flow**:
-  - On EventBus startup, `_recover()` scans pending directory for `.json` files
-  - Each pending event is deserialized and re-dispatched to subscribers
-  - Only after successful delivery does DeliveryWorker call `eventbus.ack(event)`
-  - `ack()` deletes the persisted file, confirming delivery is complete
+`InboundEvent` now has a `source: EventSource | None` field. `EventSource` is a base dataclass subclassed per-platform.
 
 ## Try it out
 
-```bash
-cd 09-channels
-uv run my-bot server
-# Send message from the channel of your choice.
+Set up Telegram:
+
+```yaml
+# default_workspace/config.user.yaml
+channels:
+  telegram:
+    enabled: true
+    bot_token: 1234:your-bot-token
+    allowed_chat_ids: [YOUR_CHAT_ID]
 ```
+
+Start the server:
+
+```bash
+uv run my-bot chat      # CLI channel still works
+```
+
+In another terminal, open Telegram and message your bot. The message shows up, the agent replies. The SAME conversation is happening in both your terminal and Telegram simultaneously — two channels, one agent, one session-per-chat.
+
+## Exercises
+
+1. **Add a Slack channel.** `pip install slack-sdk`, write a `SlackChannel(Channel)` subclass. Same shape as Telegram. Wire it up via `from_config` and config.
+
+2. **Watch the whitelist reject a message.** Remove your user ID from the allowlist. Send a message. It's silently dropped. Log inside `is_allowed` to see the rejection.
+
+3. **Cross-channel continuity.** Modify `session_id` generation so a user has one session regardless of platform (e.g., hash their email). Send a message from CLI, then reply from Telegram — the conversation continues. Is this always desirable? (Hint: group chat on Telegram.)
+
+4. **Break the delivery.** Force `TelegramChannel.reply()` to raise an exception. Watch the DeliveryWorker persist the failed event. Restore `reply()`. Watch retry.
+
+## What breaks next
+
+Channels give you "the agent meets users via messaging platforms." What about **programmatic access**? Not a human at a terminal, not a human on Telegram — a script that wants to chat with the agent over a protocol.
+
+Step 10 adds a WebSocket server. Any WebSocket client can connect and exchange messages. Same event bus, same session model, different transport.
 
 ## What's Next
 
-[Step 10: WebSocket](../10-websocket/)  - real-time web interface for interacting with agents.
+[Step 10: WebSocket](../10-websocket/) — programmatic access to the agent.

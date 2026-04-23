@@ -1,4 +1,4 @@
-# 999-bootstrap-template/workspace/config.example.yaml
+# 18-customization/bootstrap-template/workspace/config.example.yaml
 #
 # Copy this to config.user.yaml and customize. The OAuth Edition does
 # not use API keys — run `yourbot login` once to populate the Token_Store.
