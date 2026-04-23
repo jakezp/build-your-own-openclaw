@@ -63,3 +63,6 @@ web/public/steps
 .agents/
 skills-lock.json
 .claude/
+
+# local operator notes (machine-specific, not meant for git)
+RESTORE_ON_OTHER_MACHINE.md
