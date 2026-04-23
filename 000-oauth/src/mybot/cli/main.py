@@ -23,6 +23,17 @@ app = typer.Typer(
 console = Console()
 
 
+@app.callback()
+def main() -> None:
+    """my-bot CLI entry point.
+
+    A no-op callback. Its presence forces Typer to treat the app as
+    a command group rather than collapsing the single `login` command
+    into the top-level invocation. Without this, `my-bot login` would
+    become just `my-bot` (try it and see).
+    """
+
+
 @app.command("login")
 def login() -> None:
     """Run one-time ChatGPT OAuth login and write the Token_Store.
