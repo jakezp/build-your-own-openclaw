@@ -8,7 +8,9 @@ A step-by-step tutorial to build your own AI agent, from a simple chat loop to a
 
 You need a ChatGPT Plus or Pro subscription. No OpenAI API key is required — this edition authenticates exclusively via the ChatGPT subscription OAuth flow.
 
-**New to this? Read [`OAUTH_EDITION_GUIDE.md`](OAUTH_EDITION_GUIDE.md) first — it's a 10-minute standalone overview of the architecture.**
+**New to this?**
+- Read [`OAUTH_EDITION_GUIDE.md`](OAUTH_EDITION_GUIDE.md) for a 10-minute architectural overview.
+- Read [`OAUTH_DEEP_DIVE.md`](OAUTH_DEEP_DIVE.md) to understand PKCE, SSE, and the Responses API in depth.
 
 1. **Copy the example config:**
    ```bash
