@@ -145,6 +145,7 @@ def test_readme_has_quick_start_with_my_bot_login() -> None:
 
 
 _CODE_SCAN_ROOTS = [
+    "000-oauth",
     "00-chat-loop",
     "01-tools",
     "02-skills",

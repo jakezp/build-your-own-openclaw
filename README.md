@@ -10,7 +10,7 @@ You need a ChatGPT Plus or Pro subscription. No OpenAI API key is required — t
 
 **New to this?**
 - Read [`OAUTH_EDITION_GUIDE.md`](OAUTH_EDITION_GUIDE.md) for a 10-minute architectural overview.
-- Read [`OAUTH_DEEP_DIVE.md`](OAUTH_DEEP_DIVE.md) to understand PKCE, SSE, and the Responses API in depth.
+- Walk through [`000-oauth/`](000-oauth/) to set up login, inspect the Token_Store, and understand the wire protocol before tackling step 00.
 
 1. **Copy the example config:**
    ```bash
@@ -19,7 +19,8 @@ You need a ChatGPT Plus or Pro subscription. No OpenAI API key is required — t
 
 2. **Log in once with your browser:**
    ```bash
-   cd 00-chat-loop
+   cd 000-oauth
+   uv sync
    uv run my-bot login
    ```
    This opens `https://auth.openai.com/oauth/authorize` in your browser. After you sign in, tokens are saved to `~/.config/mybot/chatgpt_oauth.json` (POSIX) or `%APPDATA%\mybot\chatgpt_oauth.json` (Windows) with file mode `0600` on POSIX. Access tokens refresh automatically.
@@ -43,6 +44,11 @@ You need a ChatGPT Plus or Pro subscription. No OpenAI API key is required — t
 **Example project:** [pickle-bot](https://github.com/czl9707/pickle-bot) — our reference implementation.
 
 ## Tutorial Structure
+
+### Step 000: OAuth Foundation
+Before anything else. Sets up the login flow and builds your understanding of the wire protocol.
+
+- [**000-oauth**](./000-oauth/) — ChatGPT subscription OAuth login + SSE walkthrough.
 
 ### Phase 1: Capable Single Agent (Steps 0–6)
 Build a fully-functional agent that can chat, use tools, learn skills, remember conversations, and access the internet.

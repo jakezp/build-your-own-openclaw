@@ -27,6 +27,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 
 STEP_NAMES = [
+    "000-oauth",
     "00-chat-loop",
     "01-tools",
     "02-skills",

@@ -4,11 +4,14 @@
 
 ## Prerequisites
 
-Copy the config file and add your API key:
+**First, complete the OAuth walkthrough:** [`../000-oauth/`](../000-oauth/) — it walks you through login, the Token_Store, and the Responses API wire protocol. Takes ~20 minutes. Everything after depends on that flow working.
+
+Once you've run `my-bot login` successfully, copy the example config:
 
 ```bash
 cp default_workspace/config.example.yaml default_workspace/config.user.yaml
-# Edit config.user.yaml to add your API key
+# Edit it to change the model (default: gpt-5.4) or default_agent.
+# No credentials go in this file — they live in the Token_Store.
 ```
 
 ## What We will Build?
