@@ -1,0 +1,14 @@
+# 999-bootstrap-template/workspace/config.example.yaml
+#
+# Copy this to config.user.yaml and customize. The OAuth Edition does
+# not use API keys — run `yourbot login` once to populate the Token_Store.
+#
+# This template doesn't actually read this file (main.py hardcodes the
+# model). Use it as a template when you expand into a full agent
+# framework like the tutorial's.
+
+llm:
+  provider: openai
+  model: gpt-5.4
+
+default_agent: default

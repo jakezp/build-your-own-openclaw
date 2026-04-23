@@ -12,6 +12,10 @@ You need a ChatGPT Plus or Pro subscription. No OpenAI API key is required — t
 - Read [`OAUTH_EDITION_GUIDE.md`](OAUTH_EDITION_GUIDE.md) for a 10-minute architectural overview.
 - Walk through [`000-oauth/`](000-oauth/) to set up login, inspect the Token_Store, and understand the wire protocol before tackling step 00.
 
+**Want to make it your own?**
+- Read [`CUSTOMIZATION.md`](CUSTOMIZATION.md) — five tiers of customization from "edit one file" to "start over from scratch with your own namespace."
+- Copy [`999-bootstrap-template/`](999-bootstrap-template/) for a minimal standalone skeleton.
+
 1. **Copy the example config:**
    ```bash
    cp default_workspace/config.example.yaml default_workspace/config.user.yaml
