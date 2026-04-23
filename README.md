@@ -13,8 +13,8 @@ You need a ChatGPT Plus or Pro subscription. No OpenAI API key is required — t
 - Walk through [`000-oauth/`](000-oauth/) to set up login, inspect the Token_Store, and understand the wire protocol before tackling step 00.
 
 **Want to make it your own?**
-- Read [`CUSTOMIZATION.md`](CUSTOMIZATION.md) — five tiers of customization from "edit one file" to "start over from scratch with your own namespace."
-- Copy [`999-bootstrap-template/`](999-bootstrap-template/) for a minimal standalone skeleton.
+- Read [`18-customization/README.md`](18-customization/README.md) — five tiers of customization from "edit one file" to "start over from scratch with your own namespace."
+- Copy [`18-customization/bootstrap-template/`](18-customization/bootstrap-template/) for a minimal standalone skeleton.
 
 1. **Copy the example config:**
    ```bash
@@ -87,6 +87,11 @@ Reliability and long-term memory.
 
 - [**16-concurrency-control**](./16-concurrency-control/) — Too many pickles running at the same time?
 - [**17-memory**](./17-memory/) — Remember me.
+
+### Step 18: Make It Yours
+After finishing the tutorial, customize it — or start over with your own namespace.
+
+- [**18-customization**](./18-customization/) — five tiers of customization plus a runnable bootstrap template.
 
 ## Model Allowlist
 
